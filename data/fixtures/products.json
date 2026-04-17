@@ -1,0 +1,34 @@
+[
+  {
+    "id": "linen-shirt-001",
+    "slug": "linen-shirt",
+    "name": "Soft Linen Shirt",
+    "brand": "Atelier Sample",
+    "priceLabel": "$148 fixture",
+    "colorLabel": "Warm ivory",
+    "summary": "A fixture-backed lightweight shirt used to demonstrate factual labeling and confidence-aware guidance.",
+    "confidence": "medium",
+    "facts": [
+      { "label": "Material", "value": "100% linen", "kind": "fact", "source": "fixture catalog" },
+      { "label": "Source color", "value": "Warm ivory", "kind": "fact", "source": "fixture catalog" },
+      { "label": "Palette note", "value": "Often pairs well with muted olive or clay tones", "kind": "inference", "source": "fixture heuristic" },
+      { "label": "Style note", "value": "Feels relaxed but polished", "kind": "opinion", "source": "editorial fixture" }
+    ]
+  },
+  {
+    "id": "trouser-001",
+    "slug": "tailored-trouser",
+    "name": "Tailored Trousers",
+    "brand": "Atelier Sample",
+    "priceLabel": "$198 fixture",
+    "colorLabel": "Soft olive",
+    "summary": "A fixture-backed trouser example for early browse and product detail views.",
+    "confidence": "medium",
+    "facts": [
+      { "label": "Material", "value": "Cotton blend", "kind": "fact", "source": "fixture catalog" },
+      { "label": "Source color", "value": "Soft olive", "kind": "fact", "source": "fixture catalog" },
+      { "label": "Pairing note", "value": "May complement warm neutrals and subdued rosewood accents", "kind": "inference", "source": "fixture heuristic" },
+      { "label": "Style note", "value": "Reads more tailored than casual", "kind": "opinion", "source": "editorial fixture" }
+    ]
+  }
+]
