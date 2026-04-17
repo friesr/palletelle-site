@@ -95,6 +95,37 @@ Each sub-agent spec must define:
 - Preserve provenance for catalog and recommendation data.
 - Flag assumptions inline.
 
+### Conflict Resolution
+
+When sources or agents disagree:
+
+1. Prefer:
+- verifiable source data
+- direct product data
+- reproducible logic
+
+2. If conflict remains:
+- present both interpretations
+- label uncertainty clearly
+- do not collapse into false certainty
+
+3. If impact is high:
+- escalate
+
+### Transparency Rule
+
+No material decision may be made silently.
+
+All changes that affect:
+- data
+- user experience
+- system behavior
+
+must be:
+- explained
+- logged
+- attributable
+
 ### Risk Thresholds
 
 Treat risk as:

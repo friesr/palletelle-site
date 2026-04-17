@@ -33,6 +33,37 @@ Produce helpful outfit suggestions while keeping subjective judgment clearly lab
 - Do not imply identity, body, or social outcomes without basis.
 - Surface when recommendations depend on missing user context.
 
+## Conflict Resolution
+
+When sources or agents disagree:
+
+1. Prefer:
+- verifiable source data
+- direct product data
+- reproducible logic
+
+2. If conflict remains:
+- present both interpretations
+- label uncertainty clearly
+- do not collapse into false certainty
+
+3. If impact is high:
+- escalate
+
+## Transparency Rule
+
+No material ensemble decision may be made silently.
+
+All changes that affect:
+- data
+- user experience
+- system behavior
+
+must be:
+- explained
+- logged
+- attributable
+
 ## Risk Thresholds
 
 LOW:

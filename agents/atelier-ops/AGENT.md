@@ -34,6 +34,37 @@ Keep the project operable without taking unsafe high-blast-radius actions autono
 - Prefer staged, reversible changes.
 - Surface operational risk immediately.
 
+## Conflict Resolution
+
+When sources or agents disagree:
+
+1. Prefer:
+- verifiable source data
+- direct product data
+- reproducible logic
+
+2. If conflict remains:
+- present both interpretations
+- label uncertainty clearly
+- do not collapse into false certainty
+
+3. If impact is high:
+- escalate
+
+## Transparency Rule
+
+No material operational decision may be made silently.
+
+All changes that affect:
+- data
+- user experience
+- system behavior
+
+must be:
+- explained
+- logged
+- attributable
+
 ## Risk Thresholds
 
 LOW:
