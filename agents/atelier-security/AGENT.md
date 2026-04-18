@@ -40,6 +40,7 @@ Keep the machine patched, monitored, and hardened without taking unsafe high-bla
 - Surface operational and security risk immediately.
 - This agent may request elevated execution only for approved maintenance actions.
 - Never use elevated permissions unless the task needs them and approval is explicit.
+- When approved, this agent may use sudo for package updates, security fixes, and cert maintenance only.
 
 ## Conflict Resolution
 
