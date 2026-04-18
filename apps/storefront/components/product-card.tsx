@@ -60,10 +60,22 @@ export function ProductCard({ product }: { product: ProductRecord }) {
           <LowConfidenceNote reason={lowConfidenceReason ?? 'This item has limited supporting evidence in the current fixture set.'} />
         ) : null}
         <div className="flex items-center justify-between pt-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-black/45">Fixture-backed preview</p>
-          <Link className="rounded-full border border-black/15 px-4 py-2 text-sm font-medium" href={`/products/${product.slug}`}>
-            View product
-          </Link>
+          <p className="text-xs uppercase tracking-[0.2em] text-black/45">Customer preview</p>
+          <div className="flex items-center gap-2">
+            {product.buyUrl ? (
+              <a
+                className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white"
+                href={product.buyUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Buy
+              </a>
+            ) : null}
+            <Link className="rounded-full border border-black/15 px-4 py-2 text-sm font-medium" href={`/products/${product.slug}`}>
+              View product
+            </Link>
+          </div>
         </div>
       </div>
     </article>

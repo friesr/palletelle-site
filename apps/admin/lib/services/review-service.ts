@@ -59,49 +59,103 @@ export async function getReviewRecordById(id: string): Promise<SourcedProductRec
 
 const workflowStates = ['discovered', 'normalized', 'needs_review', 'hold', 'approved', 'rejected', 'stale', 'needs_refresh'] as const;
 
+function normalizeProductIds(productIds: string[]) {
+  const ids = Array.from(new Set(productIds.map((value) => value.trim()).filter(Boolean)));
+
+  if (ids.length === 0) {
+    throw new Error('At least one product id is required.');
+  }
+
+  return ids;
+}
+
 export async function updateProductReviewWorkflow(input: {
   productId: string;
   workflowState: string;
   reviewerNotes?: string;
   reviewedBy: string;
+  enableStorefront?: boolean;
 }) {
   requireNonEmpty(input.productId, 'Product id');
+  await updateManyProductReviewWorkflows({
+    productIds: [input.productId],
+    workflowState: input.workflowState,
+    reviewerNotes: input.reviewerNotes,
+    reviewedBy: input.reviewedBy,
+    enableStorefront: input.enableStorefront,
+  });
+}
+
+export async function updateManyProductReviewWorkflows(input: {
+  productIds: string[];
+  workflowState: string;
+  reviewerNotes?: string;
+  reviewedBy: string;
+  enableStorefront?: boolean;
+}) {
   requireNonEmpty(input.reviewedBy, 'Reviewer');
   const workflowState = requireEnumValue(input.workflowState, workflowStates, 'Workflow state') as ProductWorkflowState;
+  const productIds = normalizeProductIds(input.productIds);
+  const reviewerNotes = optionalText(input.reviewerNotes);
+  const reviewedAt = new Date();
 
-  await prisma.productReviewState.upsert({
-    where: { productId: input.productId },
-    update: {
-      workflowState,
-      reviewerNotes: optionalText(input.reviewerNotes),
-      reviewedBy: input.reviewedBy,
-      reviewedAt: new Date(),
-    },
-    create: {
-      id: `${input.productId}-review`,
-      productId: input.productId,
-      workflowState,
-      reviewerNotes: optionalText(input.reviewerNotes),
-      reviewedBy: input.reviewedBy,
-      reviewedAt: new Date(),
-    },
+  await prisma.$transaction(async (tx) => {
+    for (const productId of productIds) {
+      await tx.productReviewState.upsert({
+        where: { productId },
+        update: {
+          workflowState,
+          reviewerNotes,
+          reviewedBy: input.reviewedBy,
+          reviewedAt,
+        },
+        create: {
+          id: `${productId}-review`,
+          productId,
+          workflowState,
+          reviewerNotes,
+          reviewedBy: input.reviewedBy,
+          reviewedAt,
+        },
+      });
+
+      if (workflowState === 'needs_refresh') {
+        await tx.productSourceHealth.upsert({
+          where: { productId },
+          update: {
+            needsRevalidation: true,
+            revalidationReason: 'Marked needs_refresh by admin workflow.',
+          },
+          create: {
+            id: `${productId}-health`,
+            productId,
+            needsRevalidation: true,
+            revalidationReason: 'Marked needs_refresh by admin workflow.',
+          },
+        });
+      }
+
+      if (workflowState === 'approved' && input.enableStorefront) {
+        await tx.productVisibility.upsert({
+          where: { productId },
+          update: {
+            isPublic: true,
+            intendedActive: true,
+            visibilityNotes: 'Approved and enabled from admin review workflow.',
+            lastDisplayabilityCheckAt: reviewedAt,
+          },
+          create: {
+            id: `${productId}-visibility`,
+            productId,
+            isPublic: true,
+            intendedActive: true,
+            visibilityNotes: 'Approved and enabled from admin review workflow.',
+            lastDisplayabilityCheckAt: reviewedAt,
+          },
+        });
+      }
+    }
   });
-
-  if (workflowState === 'needs_refresh') {
-    await prisma.productSourceHealth.upsert({
-      where: { productId: input.productId },
-      update: {
-        needsRevalidation: true,
-        revalidationReason: 'Marked needs_refresh by admin workflow.',
-      },
-      create: {
-        id: `${input.productId}-health`,
-        productId: input.productId,
-        needsRevalidation: true,
-        revalidationReason: 'Marked needs_refresh by admin workflow.',
-      },
-    });
-  }
 }
 
 export async function updateProductVisibility(input: {

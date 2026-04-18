@@ -10,14 +10,25 @@ import { ReviewVisibilityForm } from '@/components/review-visibility-form';
 
 export function ReviewDetail({ product }: { product: SourcedProductRecord }) {
   const validation = validateForReview(product);
+  const badges = [
+    product.source.ingestMethod,
+    product.stagingStatus,
+    `${product.provenance.dataConfidence} confidence`,
+    product.visibility.isPublic && product.visibility.intendedActive ? 'customer preview enabled' : 'customer preview off',
+  ].filter(Boolean) as string[];
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>
       <section style={cardStyle}>
-        <p style={eyebrowStyle}>{product.stagingStatus}</p>
+        <p style={eyebrowStyle}>Review detail</p>
         <h2 style={{ margin: '8px 0 0', fontSize: 28 }}>{product.normalized.title}</h2>
         <p style={mutedText}><strong>Source:</strong> {product.source.sourcePlatform} / {product.source.sourceIdentifier}</p>
         <p style={mutedText}><strong>Retrieved:</strong> {product.source.retrievedAt}</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+          {badges.map((badge) => (
+            <span key={badge} style={pillStyle}>{badge}</span>
+          ))}
+        </div>
       </section>
 
       <section style={gridStyle}>
@@ -68,18 +79,24 @@ export function ReviewDetail({ product }: { product: SourcedProductRecord }) {
         <p style={mutedText}><strong>Can display availability:</strong> {canDisplayAvailability(product) ? 'yes' : 'no'}</p>
         <p style={mutedText}><strong>Publishable:</strong> {isPublishable(product) ? 'yes' : 'no'}</p>
         <p style={mutedText}><strong>Validation:</strong> {validation.valid ? 'passes review checks' : `fails: ${validation.reasons.join(', ')}`}</p>
+        <p style={mutedText}><strong>Customer preview:</strong> {product.visibility.isPublic && product.visibility.intendedActive ? 'enabled' : 'disabled'}</p>
       </section>
 
       <section style={cardStyle}>
         <h3 style={sectionTitle}>Review actions</h3>
-        <p style={mutedText}>These actions persist through guarded service-layer mutations and keep workflow state distinct, including hold versus needs_review.</p>
+        <p style={mutedText}>Use the primary action to approve and enable customer preview in one step. Hold and reject remain separate workflow states.</p>
         <ReviewActions productId={product.id} />
       </section>
 
       <section style={cardStyle}>
         <h3 style={sectionTitle}>Visibility control</h3>
         <p style={mutedText}>Public intent is editable here, but actual displayability remains derived from review, source health, and trust rules.</p>
-        <ReviewVisibilityForm productId={product.id} isPublic={false} intendedActive={false} visibilityNotes="Visibility is editable through the service layer. Derived displayability still depends on review, health, and trust rules." />
+        <ReviewVisibilityForm
+          productId={product.id}
+          isPublic={product.visibility.isPublic}
+          intendedActive={product.visibility.intendedActive}
+          visibilityNotes={product.visibility.visibilityNotes}
+        />
       </section>
     </div>
   );
@@ -116,4 +133,13 @@ const mutedText: React.CSSProperties = {
   fontSize: 14,
   lineHeight: 1.6,
   color: 'rgba(0,0,0,0.72)',
+};
+
+const pillStyle: React.CSSProperties = {
+  display: 'inline-block',
+  padding: '6px 10px',
+  borderRadius: 999,
+  border: '1px solid rgba(0,0,0,0.12)',
+  fontSize: 12,
+  textTransform: 'uppercase',
 };

@@ -46,6 +46,10 @@ export interface ProductRecord {
   colorLabel: string;
   summary: string;
   confidence: ConfidenceLevel;
+  buyUrl?: string;
+  canonicalUrl?: string;
+  sourcePlatform?: string;
+  sourceIdentifier?: string;
   provenance: ProductProvenance;
   recommendationRationale: RecommendationRationale;
   image?: ProductImage;

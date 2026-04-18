@@ -25,17 +25,26 @@ export function mapDbProductToSourcedRecord(input: {
   inferredData: ProductInferredData | null;
   reviewState: ProductReviewState | null;
   sourceHealth: ProductSourceHealth | null;
+  visibility?: ProductVisibility | null;
 }): SourcedProductRecord {
   const { product, sourceData, normalizedData, inferredData, reviewState, sourceHealth } = input;
 
   return {
     id: product.id,
     source: {
-      sourcePlatform: (sourceData?.sourcePlatform ?? 'amazon') as 'amazon',
+      sourcePlatform: ((sourceData?.sourcePlatform ?? 'amazon').startsWith('amazon') ? 'amazon' : sourceData?.sourcePlatform ?? 'amazon') as 'amazon',
       sourceIdentifier: sourceData?.sourceIdentifier ?? 'unknown',
+      ingestMethod: sourceData?.ingestMethod ?? undefined,
+      canonicalUrl: sourceData?.canonicalUrl ?? undefined,
+      affiliateUrl: sourceData?.affiliateUrl ?? undefined,
       retrievedAt: sourceData?.retrievedAt.toISOString() ?? product.createdAt.toISOString(),
       sourceFieldMap: sourceData?.sourceFieldMapJson ? JSON.parse(sourceData.sourceFieldMapJson) : {},
-      rawSnapshot: sourceData?.rawSnapshotJson ? JSON.parse(sourceData.rawSnapshotJson) : {},
+      rawSnapshot: {
+        ...(sourceData?.rawSnapshotJson ? JSON.parse(sourceData.rawSnapshotJson) : {}),
+        canonicalUrl: sourceData?.canonicalUrl,
+        affiliateUrl: sourceData?.affiliateUrl,
+        ingestMethod: sourceData?.ingestMethod,
+      },
     },
     normalized: {
       title: normalizedData?.title ?? product.slug,
@@ -77,16 +86,22 @@ export function mapDbProductToSourcedRecord(input: {
       },
       lastCheckedAt: sourceHealth?.lastSourceCheckAt?.toISOString(),
     },
+    visibility: {
+      isPublic: input.visibility?.isPublic ?? false,
+      intendedActive: input.visibility?.intendedActive ?? false,
+      visibilityNotes: input.visibility?.visibilityNotes ?? undefined,
+    },
     stagingStatus: (reviewState?.workflowState ?? 'needs_review') as SourcedProductRecord['stagingStatus'],
   };
 }
 
 export function mapDbProductToStorefrontRecord(input: {
   product: Product;
+  sourceData?: ProductSourceData | null;
   normalizedData: ProductNormalizedData | null;
   inferredData: ProductInferredData | null;
 }): ProductRecord {
-  const { product, normalizedData, inferredData } = input;
+  const { product, sourceData, normalizedData, inferredData } = input;
 
   const material = normalizedData?.material ?? 'Unknown';
   const sourceColor = normalizedData?.sourceColor ?? 'Unknown';
@@ -102,6 +117,10 @@ export function mapDbProductToStorefrontRecord(input: {
     colorLabel: sourceColor,
     summary: normalizedData?.summary ?? 'DB-backed local scaffold record.',
     confidence: (inferredData?.dataConfidence ?? 'low') as 'low' | 'medium' | 'high',
+    buyUrl: sourceData?.affiliateUrl ?? sourceData?.canonicalUrl ?? undefined,
+    canonicalUrl: sourceData?.canonicalUrl ?? undefined,
+    sourcePlatform: sourceData?.sourcePlatform ?? 'amazon',
+    sourceIdentifier: sourceData?.sourceIdentifier ?? product.id,
     provenance: {
       dataSource: 'DB-backed local scaffold record',
       normalizationState: 'Read from normalized and inferred tables with separated trust boundaries',
@@ -119,7 +138,11 @@ export function mapDbProductToStorefrontRecord(input: {
       { label: 'Material', value: material, kind: 'fact', source: 'normalized DB record' },
       { label: 'Source color', value: sourceColor, kind: 'fact', source: 'normalized DB record' },
       { label: 'Category', value: category, kind: 'fact', source: 'normalized DB record' },
+      { label: 'Source identifier', value: sourceData?.sourceIdentifier ?? product.id, kind: 'fact', source: 'source DB record' },
       { label: 'Style note', value: styleOpinion, kind: 'opinion', source: 'inferred DB record' },
+      ...(inferredData?.dataConfidence === 'low'
+        ? [{ label: 'Low confidence reason', value: inferredData?.confidenceReason ?? 'Limited support recorded.', kind: 'fact' as const, source: 'inferred DB record' }]
+        : []),
     ],
   };
 }
