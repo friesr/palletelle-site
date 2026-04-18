@@ -1,6 +1,15 @@
 import type { AffiliateConnectionConfig } from '@atelier/domain';
-import { sampleAffiliateConfig } from '@/lib/sample-affiliate-config';
+import { prisma } from '@/lib/db';
+import { mapDbAffiliateConfig } from '@/lib/services/db-mappers';
 
-export function getAffiliateConfig(): AffiliateConnectionConfig {
-  return sampleAffiliateConfig;
+export async function getAffiliateConfig(): Promise<AffiliateConnectionConfig> {
+  const config = await prisma.affiliateConfig.findFirst({
+    orderBy: { createdAt: 'asc' },
+  });
+
+  if (!config) {
+    throw new Error('Affiliate config record not found in local DB seed.');
+  }
+
+  return mapDbAffiliateConfig(config);
 }

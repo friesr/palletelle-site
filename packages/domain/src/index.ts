@@ -3,6 +3,7 @@ export * from './customer';
 export * from './ensembles';
 export * from './admin-config';
 export * from './visualizer';
+export * from './product-db';
 
 export type ConfidenceLevel = 'low' | 'medium' | 'high';
 

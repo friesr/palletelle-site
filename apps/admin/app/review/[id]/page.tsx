@@ -7,7 +7,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   await requireAdmin();
 
   const { id } = await params;
-  const product = getReviewRecordById(id);
+  const product = await getReviewRecordById(id);
 
   if (!product) {
     return <AdminMissingRecord title="Review record" backHref="/" backLabel="Back to queue overview" />;

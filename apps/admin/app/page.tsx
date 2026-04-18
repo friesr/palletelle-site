@@ -4,7 +4,7 @@ import { listReviewRecords } from '@/lib/services/review-service';
 
 export default async function AdminHomePage() {
   await requireAdmin();
-  const products = listReviewRecords();
+  const products = await listReviewRecords();
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>

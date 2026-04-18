@@ -7,7 +7,7 @@ export default async function ProductEditorDetailPage({ params }: { params: Prom
   await requireAdmin();
 
   const { id } = await params;
-  const product = getEditableProductById(id);
+  const product = await getEditableProductById(id);
 
   if (!product) {
     return <AdminMissingRecord title="Product editor record" backHref="/products" backLabel="Back to product editor list" />;

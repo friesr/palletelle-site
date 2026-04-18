@@ -1,11 +1,30 @@
 import type { EnsembleDefinition, ProductRecord } from '@atelier/domain';
-import { sampleEnsembleDefinitions } from '@/lib/sample-ensemble-definitions';
-import { sampleProducts } from '@/lib/sample-products';
+import { prisma } from '@/lib/db';
+import { mapDbEnsemble, mapDbProductToStorefrontRecord } from '@/lib/services/db-mappers';
 
-export function listEnsembleDefinitions(): EnsembleDefinition[] {
-  return sampleEnsembleDefinitions;
+export async function listEnsembleDefinitions(): Promise<EnsembleDefinition[]> {
+  const records = await prisma.ensemble.findMany({
+    include: { items: true },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  return records.map((record) => mapDbEnsemble(record));
 }
 
-export function listEnsembleProducts(): ProductRecord[] {
-  return sampleProducts;
+export async function listEnsembleProducts(): Promise<ProductRecord[]> {
+  const products = await prisma.product.findMany({
+    include: {
+      normalizedData: true,
+      inferredData: true,
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  return products.map((product) =>
+    mapDbProductToStorefrontRecord({
+      product,
+      normalizedData: product.normalizedData,
+      inferredData: product.inferredData,
+    }),
+  );
 }

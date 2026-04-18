@@ -1,9 +1,11 @@
 import { BrowseResultsShell } from '@/components/browse-results-shell';
 import { HowResultsWork } from '@/components/how-results-work';
 import { TrustLegend } from '@/components/trust-legend';
-import { sampleProducts } from '@/lib/sample-products';
+import { listStorefrontProducts } from '@/lib/db-products';
 
-export default function BrowsePage() {
+export default async function BrowsePage() {
+  const products = await listStorefrontProducts();
+
   return (
     <div className="space-y-6">
       <div>
@@ -19,7 +21,7 @@ export default function BrowsePage() {
         <TrustLegend />
       </section>
 
-      <BrowseResultsShell products={sampleProducts} />
+      <BrowseResultsShell products={products} />
     </div>
   );
 }

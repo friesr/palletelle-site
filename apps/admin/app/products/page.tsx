@@ -4,7 +4,7 @@ import { listEditableProducts } from '@/lib/services/product-service';
 
 export default async function ProductEditorPage() {
   await requireAdmin();
-  const products = listEditableProducts();
+  const products = await listEditableProducts();
 
   return <ProductEditorList products={products} />;
 }

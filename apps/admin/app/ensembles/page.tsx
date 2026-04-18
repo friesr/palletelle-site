@@ -4,8 +4,8 @@ import { listEnsembleDefinitions, listEnsembleProducts } from '@/lib/services/en
 
 export default async function EnsemblesPage() {
   await requireAdmin();
-  const ensembles = listEnsembleDefinitions();
-  const products = listEnsembleProducts();
+  const ensembles = await listEnsembleDefinitions();
+  const products = await listEnsembleProducts();
 
   return <EnsembleBuilderPanel ensembles={ensembles} products={products} />;
 }

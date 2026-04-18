@@ -4,7 +4,7 @@ import { getAffiliateConfig } from '@/lib/services/config-service';
 
 export default async function AdminConfigPage() {
   await requireAdmin();
-  const config = getAffiliateConfig();
+  const config = await getAffiliateConfig();
 
   return <AffiliateConfigPanel config={config} />;
 }
