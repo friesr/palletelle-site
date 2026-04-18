@@ -45,7 +45,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <TrustSummary product={product} />
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <ProductFactList product={product} />
-        <ProvenanceSummary provenance={product.provenance} confidence={product.confidence} />
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-black/10 bg-mist p-4 text-sm leading-6 text-black/70">
+            <p className="font-medium text-black">Always-visible limitation</p>
+            <p className="mt-2">
+              The main trust limit for this product is <span className="font-medium text-black">{product.provenance.uncertainAttributes[0] ?? 'limited supporting evidence'}</span>. Deeper provenance detail is available below without changing that limitation.
+            </p>
+          </div>
+          <ProvenanceSummary provenance={product.provenance} confidence={product.confidence} />
+        </div>
       </section>
     </div>
   );

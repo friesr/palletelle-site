@@ -21,6 +21,15 @@ export function RecommendationExplanation({
         <h3 className="mt-2 text-2xl font-semibold">How this shell explains uncertainty</h3>
       </div>
       <div className="space-y-4 text-sm leading-6 text-black/75">
+        <div className="rounded-2xl bg-white p-4">
+          <p className="font-medium text-black">Current confidence boundary</p>
+          <p className="mt-2">
+            {lowConfidence
+              ? 'This product is currently shown with low confidence. The shell intentionally avoids strong matching claims and treats guidance as tentative.'
+              : 'This product is shown with bounded confidence. Guidance may still change as better evidence or real product data becomes available.'}
+          </p>
+          {lowConfidence && lowConfidenceReason ? <p className="mt-2 text-black/70">Reason: {lowConfidenceReason}</p> : null}
+        </div>
         <div>
           <p className="font-medium text-black">Known facts</p>
           <p>{productName} is shown using fixture-backed source fields such as product name, source color label, and price label.</p>
@@ -32,15 +41,6 @@ export function RecommendationExplanation({
         <div>
           <p className="font-medium text-black">Style opinion</p>
           <p>Taste-driven commentary is presented as editorial judgment rather than objective product truth.</p>
-        </div>
-        <div className="rounded-2xl bg-white p-4">
-          <p className="font-medium text-black">Current confidence boundary</p>
-          <p className="mt-2">
-            {lowConfidence
-              ? 'This product is currently shown with low confidence. The shell intentionally avoids strong matching claims and treats guidance as tentative.'
-              : 'This product is shown with bounded confidence. Guidance may still change as better evidence or real product data becomes available.'}
-          </p>
-          {lowConfidence && lowConfidenceReason ? <p className="mt-2 text-black/70">Reason: {lowConfidenceReason}</p> : null}
         </div>
       </div>
       <RecommendationRationale rationale={rationale} />

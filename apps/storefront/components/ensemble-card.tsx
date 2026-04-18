@@ -35,6 +35,12 @@ export function EnsembleCard({ ensemble }: { ensemble: EnsembleRecord }) {
           ))}
         </div>
       </div>
+      <div className="rounded-2xl border border-black/10 px-4 py-3 text-sm leading-6 text-black/65">
+        <p>
+          <span className="font-medium text-black">Source:</span> {ensemble.provenance.dataSource}.{' '}
+          <span className="font-medium text-black">Main uncertainty:</span> {ensemble.provenance.uncertainAttributes[0] ?? 'limited supporting evidence'}.
+        </p>
+      </div>
       <ProvenanceSummary provenance={ensemble.provenance} confidence={ensemble.confidence} compact />
       <RecommendationRationale rationale={ensemble.recommendationRationale} compact />
       {ensemble.lowConfidenceReason ? (

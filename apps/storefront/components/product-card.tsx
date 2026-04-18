@@ -36,6 +36,11 @@ export function ProductCard({ product }: { product: ProductRecord }) {
             <span className="font-medium text-black">Source:</span> {product.provenance.dataSource}.{' '}
             <span className="font-medium text-black">Confidence:</span> {product.provenance.confidenceReason}
           </p>
+          {product.provenance.uncertainAttributes.length > 0 ? (
+            <p className="mt-2 text-black/60">
+              <span className="font-medium text-black">Main uncertainty:</span> {product.provenance.uncertainAttributes[0]}.
+            </p>
+          ) : null}
         </div>
         <DisclosurePanel
           title="Provenance details"
