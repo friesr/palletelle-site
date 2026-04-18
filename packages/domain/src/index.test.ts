@@ -12,6 +12,19 @@ describe('domain types', () => {
       colorLabel: 'Warm ivory',
       summary: 'Fixture-backed product summary.',
       confidence: 'medium',
+      provenance: {
+        dataSource: 'fixture',
+        normalizationState: 'normalized',
+        confidenceReason: 'core fields are present',
+        confidenceImprovement: 'more real evidence',
+        missingAttributes: ['inventory'],
+        uncertainAttributes: ['pairing strength'],
+      },
+      recommendationRationale: {
+        objectiveMatch: 'neutral shirt category and source color',
+        inferredMatch: 'soft olive pairing from fixture heuristic',
+        subjectiveSuggestion: 'polished relaxed direction',
+      },
       facts: [
         { label: 'Material', value: '100% linen', kind: 'fact', source: 'fixture' },
         { label: 'Pairing note', value: 'Works with soft olive tones', kind: 'inference', source: 'fixture heuristic' },

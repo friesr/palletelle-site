@@ -32,7 +32,11 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
-        <RecommendationExplanation productName={featured.name} confidence={featured.confidence} />
+        <RecommendationExplanation
+          productName={featured.name}
+          confidence={featured.confidence}
+          rationale={featured.recommendationRationale}
+        />
       </section>
 
       <TrustSummary product={featured} />

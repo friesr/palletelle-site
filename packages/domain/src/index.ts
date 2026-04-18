@@ -9,6 +9,21 @@ export interface ProductFact {
   source: string;
 }
 
+export interface ProductProvenance {
+  dataSource: string;
+  normalizationState: string;
+  confidenceReason: string;
+  confidenceImprovement: string;
+  missingAttributes: string[];
+  uncertainAttributes: string[];
+}
+
+export interface RecommendationRationale {
+  objectiveMatch: string;
+  inferredMatch: string;
+  subjectiveSuggestion: string;
+}
+
 export interface ProductRecord {
   id: string;
   slug: string;
@@ -18,5 +33,7 @@ export interface ProductRecord {
   colorLabel: string;
   summary: string;
   confidence: ConfidenceLevel;
+  provenance: ProductProvenance;
+  recommendationRationale: RecommendationRationale;
   facts: ProductFact[];
 }

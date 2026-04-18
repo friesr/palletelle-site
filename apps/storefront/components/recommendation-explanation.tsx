@@ -1,19 +1,26 @@
+import type { RecommendationRationale as RecommendationRationaleData } from '@atelier/domain';
+import { RecommendationRationale } from '@/components/recommendation-rationale';
+
 export function RecommendationExplanation({
   productName,
   confidence = 'medium',
   lowConfidenceReason,
+  rationale,
 }: {
   productName: string;
   confidence?: 'low' | 'medium' | 'high';
   lowConfidenceReason?: string;
+  rationale: RecommendationRationaleData;
 }) {
   const lowConfidence = confidence === 'low';
 
   return (
-    <aside className="rounded-3xl border border-black/10 bg-mist p-6">
-      <p className="text-sm uppercase tracking-[0.25em] text-black/45">Recommendation framing</p>
-      <h3 className="mt-2 text-2xl font-semibold">How this shell explains uncertainty</h3>
-      <div className="mt-5 space-y-4 text-sm leading-6 text-black/75">
+    <aside className="space-y-4 rounded-3xl border border-black/10 bg-mist p-6">
+      <div>
+        <p className="text-sm uppercase tracking-[0.25em] text-black/45">Recommendation framing</p>
+        <h3 className="mt-2 text-2xl font-semibold">How this shell explains uncertainty</h3>
+      </div>
+      <div className="space-y-4 text-sm leading-6 text-black/75">
         <div>
           <p className="font-medium text-black">Known facts</p>
           <p>{productName} is shown using fixture-backed source fields such as product name, source color label, and price label.</p>
@@ -36,6 +43,7 @@ export function RecommendationExplanation({
           {lowConfidence && lowConfidenceReason ? <p className="mt-2 text-black/70">Reason: {lowConfidenceReason}</p> : null}
         </div>
       </div>
+      <RecommendationRationale rationale={rationale} />
     </aside>
   );
 }

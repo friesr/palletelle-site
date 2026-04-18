@@ -46,6 +46,7 @@ Implement the scope below and validate locally.
 - improve browse clarity without fake sophistication
 - improve product detail clarity and low-confidence handling
 - include explicit fixture-backed messaging
+- surface provenance and recommendation rationale without clutter
 
 ### Components and pages
 - improved homepage trust framing
@@ -65,4 +66,5 @@ Implement the scope below and validate locally.
 - local app remains buildable and testable
 - trust/confidence state is visible in browse and detail views
 - low-confidence cases are explained, not hidden
+- provenance and rationale are visible in compact and full forms
 - UI avoids urgency, scarcity, and exaggerated recommendation claims

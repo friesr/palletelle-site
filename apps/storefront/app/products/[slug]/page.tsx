@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { sampleProducts } from '@/lib/sample-products';
 import { LowConfidenceNote } from '@/components/low-confidence-note';
 import { ProductFactList } from '@/components/product-fact-list';
+import { ProvenanceSummary } from '@/components/provenance-summary';
 import { RecommendationExplanation } from '@/components/recommendation-explanation';
 import { TrustSummary } from '@/components/trust-summary';
 
@@ -37,10 +38,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           productName={product.name}
           confidence={product.confidence}
           lowConfidenceReason={lowConfidenceReason}
+          rationale={product.recommendationRationale}
         />
       </section>
 
       <TrustSummary product={product} />
+      <ProvenanceSummary provenance={product.provenance} confidence={product.confidence} />
       <ProductFactList product={product} />
     </div>
   );

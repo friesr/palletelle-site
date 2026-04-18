@@ -8,6 +8,19 @@
     "colorLabel": "Warm ivory",
     "summary": "A fixture-backed lightweight shirt used to demonstrate factual labeling and confidence-aware guidance.",
     "confidence": "medium",
+    "provenance": {
+      "dataSource": "Fixture catalog entry",
+      "normalizationState": "Normalized from fixture fields into storefront shape",
+      "confidenceReason": "Core product fields are present, but color-compatibility guidance remains heuristic and fixture-based.",
+      "confidenceImprovement": "Confidence would improve with validated product imagery, richer attribute coverage, and real supporting catalog evidence.",
+      "missingAttributes": ["validated fit notes", "real inventory state"],
+      "uncertainAttributes": ["cross-garment color harmony"]
+    },
+    "recommendationRationale": {
+      "objectiveMatch": "The source color is warm ivory and the category is a lightweight shirt, which makes it easy to place in a neutral fixture wardrobe.",
+      "inferredMatch": "Muted olive and clay pairings are suggested through simple fixture heuristics, not measured color analysis.",
+      "subjectiveSuggestion": "This piece may suit a calm, polished outfit direction if you want a softer neutral base."
+    },
     "facts": [
       { "label": "Material", "value": "100% linen", "kind": "fact", "source": "fixture catalog" },
       { "label": "Source color", "value": "Warm ivory", "kind": "fact", "source": "fixture catalog" },
@@ -27,6 +40,19 @@
     "colorLabel": "Soft olive",
     "summary": "A fixture-backed trouser example for early browse and product detail views.",
     "confidence": "medium",
+    "provenance": {
+      "dataSource": "Fixture catalog entry",
+      "normalizationState": "Normalized from fixture fields into storefront shape",
+      "confidenceReason": "The source category and color are explicit, but matching guidance still depends on simple inferred pairing rules.",
+      "confidenceImprovement": "Confidence would improve with verified fabric details, more complete attribute support, and tested recommendation examples.",
+      "missingAttributes": ["validated styling context"],
+      "uncertainAttributes": ["pairing strength across broader wardrobes"]
+    },
+    "recommendationRationale": {
+      "objectiveMatch": "The product is explicitly marked as a trouser in a soft olive source color.",
+      "inferredMatch": "Warm neutrals and rosewood accents are suggested through deterministic fixture rules rather than dynamic scoring.",
+      "subjectiveSuggestion": "This may work well when you want a more tailored anchor for a muted ensemble direction."
+    },
     "facts": [
       { "label": "Material", "value": "Cotton blend", "kind": "fact", "source": "fixture catalog" },
       { "label": "Source color", "value": "Soft olive", "kind": "fact", "source": "fixture catalog" },
@@ -46,6 +72,19 @@
     "colorLabel": "Muted rosewood",
     "summary": "A lower-confidence fixture item used to demonstrate cautious recommendation messaging.",
     "confidence": "low",
+    "provenance": {
+      "dataSource": "Fixture catalog entry",
+      "normalizationState": "Normalized from fixture fields into storefront shape with limited supporting evidence",
+      "confidenceReason": "The shell has a clear source color and category, but lacks enough supporting evidence to make stronger cross-garment color claims.",
+      "confidenceImprovement": "Confidence would improve with validated imagery, better color reference support, and more complete cross-item compatibility evidence.",
+      "missingAttributes": ["validated imagery", "stronger compatibility evidence", "real ensemble examples"],
+      "uncertainAttributes": ["cross-garment color mapping", "strength of recommendation"]
+    },
+    "recommendationRationale": {
+      "objectiveMatch": "The item is explicitly represented as a knit layer with a muted rosewood source color.",
+      "inferredMatch": "Potential compatibility with soft olive and warm ivory is an explainable heuristic, but the evidence is limited.",
+      "subjectiveSuggestion": "This could add warmth to a muted outfit, but the shell is intentionally cautious about framing it as a strong match."
+    },
     "facts": [
       { "label": "Material", "value": "Wool blend", "kind": "fact", "source": "fixture catalog" },
       { "label": "Source color", "value": "Muted rosewood", "kind": "fact", "source": "fixture catalog" },
