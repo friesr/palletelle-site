@@ -1,4 +1,8 @@
 export * from './sourcing';
+export * from './customer';
+export * from './ensembles';
+export * from './admin-config';
+export * from './visualizer';
 
 export type ConfidenceLevel = 'low' | 'medium' | 'high';
 

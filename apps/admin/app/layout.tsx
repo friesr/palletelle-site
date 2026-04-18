@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { auth } from '@/auth';
+import { AdminNav } from '@/components/admin-nav';
 import { LogoutButton } from '@/components/logout-button';
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <div>
                 <p style={{ fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0.6 }}>Palletelle Admin</p>
                 <h1 style={{ margin: '8px 0 0', fontSize: 30 }}>Staging and review workspace</h1>
+                <AdminNav />
               </div>
               <div style={{ display: 'grid', gap: 8, justifyItems: 'end' }}>
                 <p style={{ margin: 0, fontSize: 13, color: 'rgba(0,0,0,0.65)' }}>

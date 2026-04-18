@@ -1,9 +1,10 @@
 import { StagingQueue } from '@/components/staging-queue';
 import { requireAdmin } from '@/lib/auth/session';
-import { sampleStagedProducts } from '@/lib/sample-staged-products';
+import { listReviewRecords } from '@/lib/services/review-service';
 
 export default async function AdminHomePage() {
   await requireAdmin();
+  const products = listReviewRecords();
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>
@@ -14,7 +15,7 @@ export default async function AdminHomePage() {
           This fixture-backed admin surface exposes provenance, freshness, confidence, and review state before any listing is eligible for storefront visibility.
         </p>
       </section>
-      <StagingQueue products={sampleStagedProducts} />
+      <StagingQueue products={products} />
     </div>
   );
 }

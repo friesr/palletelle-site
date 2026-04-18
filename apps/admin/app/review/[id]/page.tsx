@@ -1,16 +1,16 @@
-import { notFound } from 'next/navigation';
+import { AdminMissingRecord } from '@/components/admin-missing-record';
 import { ReviewDetail } from '@/components/review-detail';
 import { requireAdmin } from '@/lib/auth/session';
-import { sampleStagedProducts } from '@/lib/sample-staged-products';
+import { getReviewRecordById } from '@/lib/services/review-service';
 
 export default async function ReviewPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
 
   const { id } = await params;
-  const product = sampleStagedProducts.find((entry) => entry.id === id);
+  const product = getReviewRecordById(id);
 
   if (!product) {
-    notFound();
+    return <AdminMissingRecord title="Review record" backHref="/" backLabel="Back to queue overview" />;
   }
 
   return <ReviewDetail product={product} />;
