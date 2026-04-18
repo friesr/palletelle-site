@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assessPriceTrackingHistory, parsePriceText } from './price-tracking';
+import { assessPriceTrackingHistory, parsePriceText, shouldCreatePriceSnapshot } from './price-tracking';
 
 describe('price tracking helpers', () => {
   it('parses simple USD price text safely', () => {
@@ -16,5 +16,15 @@ describe('price tracking helpers', () => {
     expect(summary.hasPriceDrop).toBe(true);
     expect(summary.isLowestObserved).toBe(true);
     expect(summary.lowestObservedPriceText).toBe('$120');
+    expect(summary.lowestObservedAt).toBe('2026-04-18T12:00:00.000Z');
+  });
+
+  it('dedupes unchanged price observations', () => {
+    expect(
+      shouldCreatePriceSnapshot(
+        { priceText: '$120', priceAmountCents: 12000, currencyCode: 'USD' },
+        { priceText: '$120', priceAmountCents: 12000, currencyCode: 'USD' },
+      ),
+    ).toBe(false);
   });
 });

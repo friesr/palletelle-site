@@ -7,6 +7,10 @@ export async function listReviewRecords(): Promise<SourcedProductRecord[]> {
   const products = await prisma.product.findMany({
     include: {
       sourceData: true,
+      priceSnapshots: {
+        orderBy: { capturedAt: 'desc' },
+        take: 12,
+      },
       normalizedData: true,
       inferredData: true,
       reviewState: true,
@@ -20,6 +24,7 @@ export async function listReviewRecords(): Promise<SourcedProductRecord[]> {
     mapDbProductToSourcedRecord({
       product,
       sourceData: product.sourceData[0] ?? null,
+      priceSnapshots: product.priceSnapshots,
       normalizedData: product.normalizedData,
       inferredData: product.inferredData,
       reviewState: product.reviewState,
@@ -34,6 +39,10 @@ export async function getReviewRecordById(id: string): Promise<SourcedProductRec
     where: { id },
     include: {
       sourceData: true,
+      priceSnapshots: {
+        orderBy: { capturedAt: 'desc' },
+        take: 24,
+      },
       normalizedData: true,
       inferredData: true,
       reviewState: true,
@@ -48,8 +57,9 @@ export async function getReviewRecordById(id: string): Promise<SourcedProductRec
 
   return mapDbProductToSourcedRecord({
     product,
-    sourceData: product.sourceData[0] ?? null,
-    normalizedData: product.normalizedData,
+      sourceData: product.sourceData[0] ?? null,
+      priceSnapshots: product.priceSnapshots,
+      normalizedData: product.normalizedData,
     inferredData: product.inferredData,
     reviewState: product.reviewState,
     sourceHealth: product.sourceHealth,

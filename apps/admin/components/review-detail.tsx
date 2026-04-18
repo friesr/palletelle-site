@@ -74,6 +74,32 @@ export function ReviewDetail({ product }: { product: SourcedProductRecord }) {
       </section>
 
       <section style={cardStyle}>
+        <h3 style={sectionTitle}>Price history</h3>
+        {product.priceHistory ? (
+          <>
+            <p style={mutedText}><strong>Current price:</strong> {product.priceHistory.summary.currentPriceText ?? 'unknown'}</p>
+            <p style={mutedText}><strong>Previously observed:</strong> {product.priceHistory.summary.previousComparablePriceText ?? 'not yet available'}</p>
+            <p style={mutedText}><strong>Lowest observed:</strong> {product.priceHistory.summary.lowestObservedPriceText ?? 'not yet available'}</p>
+            <p style={mutedText}><strong>Lowest observed at:</strong> {product.priceHistory.summary.lowestObservedAt ?? 'not yet available'}</p>
+            <p style={mutedText}><strong>Tracked observations:</strong> {product.priceHistory.summary.observedPriceCount}</p>
+            <p style={mutedText}><strong>History note:</strong> {product.priceHistory.summary.note}</p>
+            <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
+              {product.priceHistory.snapshots.map((snapshot) => (
+                <div key={snapshot.id ?? `${snapshot.capturedAt}-${snapshot.priceText}`} style={snapshotCardStyle}>
+                  <p style={snapshotTextStyle}><strong>Observed:</strong> {snapshot.priceText}</p>
+                  <p style={snapshotTextStyle}><strong>Captured at:</strong> {snapshot.capturedAt}</p>
+                  <p style={snapshotTextStyle}><strong>Source listing:</strong> {snapshot.sourceIdentifier ?? 'unknown'}</p>
+                  <p style={snapshotTextStyle}><strong>Capture method:</strong> {snapshot.captureMethod ?? 'unknown'}</p>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p style={mutedText}>No source price history has been captured yet for this product.</p>
+        )}
+      </section>
+
+      <section style={cardStyle}>
         <h3 style={sectionTitle}>Display enforcement</h3>
         <p style={mutedText}><strong>Can display price:</strong> {canDisplayPrice(product) ? 'yes' : 'no'}</p>
         <p style={mutedText}><strong>Can display availability:</strong> {canDisplayAvailability(product) ? 'yes' : 'no'}</p>
@@ -142,4 +168,17 @@ const pillStyle: React.CSSProperties = {
   border: '1px solid rgba(0,0,0,0.12)',
   fontSize: 12,
   textTransform: 'uppercase',
+};
+
+const snapshotCardStyle: React.CSSProperties = {
+  border: '1px solid rgba(0,0,0,0.08)',
+  borderRadius: 16,
+  padding: 14,
+};
+
+const snapshotTextStyle: React.CSSProperties = {
+  margin: '6px 0 0',
+  fontSize: 13,
+  lineHeight: 1.6,
+  color: 'rgba(0,0,0,0.72)',
 };

@@ -22,10 +22,10 @@ function createAmazonUrls(asin: string) {
 
 function buildPriceSnapshot(input: {
   productId: string;
+  productSourceDataId: string;
   priceText?: string | null;
   capturedAt: Date;
   captureMethod: string;
-  sourceReference: string;
   notes: string;
 }) {
   if (!input.priceText) {
@@ -40,12 +40,12 @@ function buildPriceSnapshot(input: {
 
   return {
     id: `${input.productId}-price-${input.captureMethod}`,
+    productSourceDataId: input.productSourceDataId,
     capturedAt: input.capturedAt,
     priceText: input.priceText,
     priceAmountCents: parsed.amountCents,
     currencyCode: parsed.currencyCode,
     captureMethod: input.captureMethod,
-    sourceReference: input.sourceReference,
     notes: input.notes,
   };
 }
@@ -53,39 +53,30 @@ function buildPriceSnapshot(input: {
 async function seedFixtureProducts() {
   for (const fixture of productFixtures) {
     const staged = sampleStagedProducts.find((entry) => slugify(entry.normalized.title) === fixture.slug);
-    const seededPriceSnapshot = buildPriceSnapshot({
-      productId: fixture.id,
-      priceText: staged?.source.rawSnapshot?.price ?? staged?.normalized.priceText ?? fixture.priceLabel ?? undefined,
-      capturedAt: staged?.freshness.lastCheckedAt ? new Date(staged.freshness.lastCheckedAt) : retrievedAt,
-      captureMethod: 'fixture_seed',
-      sourceReference: staged?.source.sourcePlatform ?? 'fixture',
-      notes: 'Initial fixture-seeded price snapshot.',
-    });
+    const sourceDataId = `${fixture.id}-source`;
 
     await prisma.product.create({
       data: {
         id: fixture.id,
         slug: fixture.slug,
-        sourceData: staged
-          ? {
-              create: {
-                id: `${fixture.id}-source`,
-                sourcePlatform: staged.source.sourcePlatform,
-                ingestMethod: 'fixture_seed',
-                sourceIdentifier: staged.source.sourceIdentifier,
-                canonicalUrl: undefined,
-                affiliateUrl: undefined,
-                retrievedAt: new Date(staged.source.retrievedAt),
-                title: staged.source.rawSnapshot?.title,
-                categoryText: staged.source.rawSnapshot?.category,
-                colorText: staged.normalized.sourceColor,
-                priceText: staged.source.rawSnapshot?.price,
-                availabilityText: staged.source.rawSnapshot?.availability,
-                rawSnapshotJson: JSON.stringify(staged.source.rawSnapshot ?? {}),
-                sourceFieldMapJson: JSON.stringify(staged.source.sourceFieldMap),
-              },
-            }
-          : undefined,
+        sourceData: {
+          create: {
+            id: sourceDataId,
+            sourcePlatform: staged?.source.sourcePlatform ?? 'fixture',
+            ingestMethod: 'fixture_seed',
+            sourceIdentifier: staged?.source.sourceIdentifier ?? fixture.id,
+            canonicalUrl: undefined,
+            affiliateUrl: undefined,
+            retrievedAt: staged?.source.retrievedAt ? new Date(staged.source.retrievedAt) : retrievedAt,
+            title: staged?.source.rawSnapshot?.title ?? fixture.name,
+            categoryText: staged?.source.rawSnapshot?.category ?? fixture.facts.find((fact) => fact.label === 'Category')?.value,
+            colorText: staged?.normalized.sourceColor ?? fixture.colorLabel,
+            priceText: staged?.source.rawSnapshot?.price ?? fixture.priceLabel,
+            availabilityText: staged?.source.rawSnapshot?.availability,
+            rawSnapshotJson: JSON.stringify(staged?.source.rawSnapshot ?? { title: fixture.name, price: fixture.priceLabel }),
+            sourceFieldMapJson: JSON.stringify(staged?.source.sourceFieldMap ?? { title: 'fixture.name', priceText: 'fixture.priceLabel' }),
+          },
+        },
         normalizedData: {
           create: {
             id: `${fixture.id}-normalized`,
@@ -112,11 +103,6 @@ async function seedFixtureProducts() {
             uncertainAttributesJson: JSON.stringify(fixture.provenance.uncertainAttributes),
           },
         },
-        priceSnapshots: seededPriceSnapshot
-          ? {
-              create: seededPriceSnapshot,
-            }
-          : undefined,
         reviewState: {
           create: {
             id: `${fixture.id}-review`,
@@ -155,6 +141,24 @@ async function seedFixtureProducts() {
         },
       },
     });
+
+    const seededPriceSnapshot = buildPriceSnapshot({
+      productId: fixture.id,
+      productSourceDataId: sourceDataId,
+      priceText: staged?.source.rawSnapshot?.price ?? staged?.normalized.priceText ?? fixture.priceLabel ?? undefined,
+      capturedAt: staged?.freshness.lastCheckedAt ? new Date(staged.freshness.lastCheckedAt) : retrievedAt,
+      captureMethod: 'fixture_seed',
+      notes: 'Initial fixture-seeded source price snapshot.',
+    });
+
+    if (seededPriceSnapshot) {
+      await prisma.productPriceSnapshot.create({
+        data: {
+          ...seededPriceSnapshot,
+          productId: fixture.id,
+        },
+      });
+    }
   }
 }
 

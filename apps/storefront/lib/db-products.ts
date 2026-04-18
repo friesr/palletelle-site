@@ -91,13 +91,15 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
   const sourceColor = normalizedData?.sourceColor ?? 'Unknown color';
   const styleOpinion = inferredData?.styleOpinion ?? 'No editorial suggestion recorded.';
   const priceTracking = assessPriceTrackingHistory(
-    product.priceSnapshots.map((snapshot) => ({
-      priceText: snapshot.priceText,
-      priceAmountCents: snapshot.priceAmountCents ?? undefined,
-      currencyCode: snapshot.currencyCode ?? undefined,
-      capturedAt: snapshot.capturedAt.toISOString(),
-      captureMethod: snapshot.captureMethod,
-    })),
+    product.priceSnapshots
+      .filter((snapshot) => !sourceData || snapshot.productSourceDataId === sourceData.id)
+      .map((snapshot) => ({
+        priceText: snapshot.priceText,
+        priceAmountCents: snapshot.priceAmountCents ?? undefined,
+        currencyCode: snapshot.currencyCode ?? undefined,
+        capturedAt: snapshot.capturedAt.toISOString(),
+        captureMethod: snapshot.captureMethod,
+      })),
   );
 
   return {
@@ -105,7 +107,7 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
     slug: product.slug,
     name: normalizedData?.title ?? sourceData?.title ?? product.slug,
     brand: normalizedData?.brand ?? 'Unknown brand',
-    priceLabel: normalizedData?.priceText ?? sourceData?.priceText ?? 'Price pending review',
+    priceLabel: priceTracking.currentPriceText ?? 'Price not yet observed',
     colorLabel: normalizedData?.sourceColor ?? sourceData?.colorText ?? 'Color pending review',
     summary:
       normalizedData?.summary ??

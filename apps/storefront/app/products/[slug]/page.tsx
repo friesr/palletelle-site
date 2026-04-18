@@ -71,11 +71,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
                 <p className="font-medium text-black">Tracked price context</p>
                 <p className="mt-2">{product.priceTracking.note}</p>
+                <p className="mt-2 text-black/60">Current price: {product.priceTracking.currentPriceText ?? product.priceLabel}</p>
                 {product.priceTracking.previousComparablePriceText ? (
-                  <p className="mt-2 text-black/60">Previous tracked price: {product.priceTracking.previousComparablePriceText}</p>
+                  <p className="mt-1 text-black/60">Previously observed: {product.priceTracking.previousComparablePriceText}</p>
                 ) : null}
-                {product.priceTracking.lowestObservedPriceText ? (
-                  <p className="mt-1 text-black/60">Lowest observed tracked price: {product.priceTracking.lowestObservedPriceText}</p>
+                {product.priceTracking.lowestObservedPriceText && product.priceTracking.observedPriceCount >= 2 ? (
+                  <p className="mt-1 text-black/60">Lowest observed: {product.priceTracking.lowestObservedPriceText}</p>
+                ) : null}
+                {product.priceTracking.lowestObservedAt && product.priceTracking.observedPriceCount >= 2 ? (
+                  <p className="mt-1 text-black/60">Lowest observed at: {new Date(product.priceTracking.lowestObservedAt).toISOString()}</p>
                 ) : null}
                 <p className="mt-1 text-black/60">Tracked snapshots: {product.priceTracking.observedPriceCount}</p>
               </div>

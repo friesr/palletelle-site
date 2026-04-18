@@ -25,18 +25,18 @@ export function ProductCard({ product }: { product: ProductRecord }) {
         <p className="text-black/70">{product.summary}</p>
         <dl className="grid gap-3 rounded-2xl bg-mist p-4 text-sm text-black/75">
           <div className="flex justify-between gap-4">
-            <dt>Price</dt>
-            <dd>{product.priceLabel}</dd>
+            <dt>Current price</dt>
+            <dd>{product.priceTracking?.currentPriceText ?? product.priceLabel}</dd>
           </div>
-          {product.priceTracking?.hasPriceDrop ? (
+          {product.priceTracking?.previousComparablePriceText ? (
             <div className="flex justify-between gap-4">
-              <dt>Tracked change</dt>
-              <dd>{`Dropped from ${product.priceTracking.previousComparablePriceText}`}</dd>
+              <dt>Previously observed</dt>
+              <dd>{product.priceTracking.previousComparablePriceText}</dd>
             </div>
           ) : null}
-          {product.priceTracking?.isLowestObserved ? (
+          {product.priceTracking?.lowestObservedPriceText && product.priceTracking.observedPriceCount >= 2 ? (
             <div className="flex justify-between gap-4">
-              <dt>Tracked low</dt>
+              <dt>Lowest observed</dt>
               <dd>{product.priceTracking.lowestObservedPriceText}</dd>
             </div>
           ) : null}

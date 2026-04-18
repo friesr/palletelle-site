@@ -79,16 +79,18 @@ model Product {
 model ProductPriceSnapshot {
   id               String   @id
   productId        String
+  productSourceDataId String
   capturedAt       DateTime @default(now())
   priceText        String
   priceAmountCents Int?
   currencyCode     String?
   captureMethod    String
-  sourceReference  String?
   notes            String?
   product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sourceData       ProductSourceData @relation(fields: [productSourceDataId], references: [id], onDelete: Cascade)
 
   @@index([productId, capturedAt])
+  @@index([productSourceDataId, capturedAt])
 }
 
 model ProductSourceData {
@@ -107,6 +109,7 @@ model ProductSourceData {
   availabilityText  String?
   rawSnapshotJson   String?
   sourceFieldMapJson String?
+  priceSnapshots    ProductPriceSnapshot[]
   product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])

@@ -1,9 +1,18 @@
 export interface PriceSnapshotRecord {
+  id?: string;
+  productSourceDataId?: string;
+  sourceIdentifier?: string;
   priceText: string;
   priceAmountCents?: number;
   currencyCode?: string;
   capturedAt: string;
   captureMethod?: string;
+}
+
+export interface PriceSnapshotCandidate {
+  priceText: string;
+  priceAmountCents?: number;
+  currencyCode?: string;
 }
 
 export interface ParsedPrice {
@@ -15,10 +24,23 @@ export interface PriceTrackingSummary {
   currentPriceText?: string;
   previousComparablePriceText?: string;
   lowestObservedPriceText?: string;
+  lowestObservedAt?: string;
   hasPriceDrop: boolean;
   isLowestObserved: boolean;
   observedPriceCount: number;
   note: string;
+}
+
+export function shouldCreatePriceSnapshot(latest: PriceSnapshotCandidate | null | undefined, next: PriceSnapshotCandidate): boolean {
+  if (!latest) {
+    return true;
+  }
+
+  return !(
+    latest.priceText === next.priceText &&
+    latest.priceAmountCents === next.priceAmountCents &&
+    latest.currencyCode === next.currencyCode
+  );
 }
 
 export function parsePriceText(priceText?: string | null): ParsedPrice {
@@ -95,6 +117,7 @@ export function assessPriceTrackingHistory(snapshots: PriceSnapshotRecord[]): Pr
     currentPriceText: current.priceText,
     previousComparablePriceText: previousComparable?.priceText,
     lowestObservedPriceText: lowestObserved.priceText,
+    lowestObservedAt: lowestObserved.capturedAt,
     hasPriceDrop,
     isLowestObserved,
     observedPriceCount: numericSnapshots.length,

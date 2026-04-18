@@ -1,4 +1,4 @@
-export type SourcePlatform = 'amazon';
+export type SourcePlatform = 'amazon' | 'fixture';
 
 export type FreshnessStatus = 'fresh' | 'stale' | 'unknown';
 
@@ -80,6 +80,10 @@ export interface SourcedProductRecord {
   provenance: ProductProvenance;
   freshness: FreshnessState;
   visibility: ProductVisibilityState;
+  priceHistory?: {
+    summary: import('./price-tracking').PriceTrackingSummary;
+    snapshots: import('./price-tracking').PriceSnapshotRecord[];
+  };
   stagingStatus: StagingStatus;
 }
 

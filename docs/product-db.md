@@ -98,6 +98,7 @@ Implemented schema entities include:
 ### Price history
 `ProductPriceSnapshot`
 - point-in-time tracked price records
+- linked to both `Product` and the specific `ProductSourceData` listing observed
 - raw `priceText`
 - optional parsed numeric amount/currency when safely extractable
 - capture method / source reference / notes

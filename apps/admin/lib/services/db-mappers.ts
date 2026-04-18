@@ -1,3 +1,6 @@
+import {
+  assessPriceTrackingHistory,
+} from '@atelier/domain';
 import type {
   AffiliateConnectionConfig,
   EnsembleDefinition,
@@ -12,6 +15,7 @@ import type {
   Product,
   ProductInferredData,
   ProductNormalizedData,
+  ProductPriceSnapshot,
   ProductReviewState,
   ProductSourceData,
   ProductSourceHealth,
@@ -21,6 +25,7 @@ import type {
 export function mapDbProductToSourcedRecord(input: {
   product: Product;
   sourceData: ProductSourceData | null;
+  priceSnapshots?: ProductPriceSnapshot[];
   normalizedData: ProductNormalizedData | null;
   inferredData: ProductInferredData | null;
   reviewState: ProductReviewState | null;
@@ -28,11 +33,23 @@ export function mapDbProductToSourcedRecord(input: {
   visibility?: ProductVisibility | null;
 }): SourcedProductRecord {
   const { product, sourceData, normalizedData, inferredData, reviewState, sourceHealth } = input;
+  const priceHistorySnapshots = (input.priceSnapshots ?? [])
+    .filter((snapshot) => !sourceData || snapshot.productSourceDataId === sourceData.id)
+    .map((snapshot) => ({
+      id: snapshot.id,
+      productSourceDataId: snapshot.productSourceDataId,
+      sourceIdentifier: sourceData?.sourceIdentifier ?? undefined,
+      priceText: snapshot.priceText,
+      priceAmountCents: snapshot.priceAmountCents ?? undefined,
+      currencyCode: snapshot.currencyCode ?? undefined,
+      capturedAt: snapshot.capturedAt.toISOString(),
+      captureMethod: snapshot.captureMethod,
+    }));
 
   return {
     id: product.id,
     source: {
-      sourcePlatform: ((sourceData?.sourcePlatform ?? 'amazon').startsWith('amazon') ? 'amazon' : sourceData?.sourcePlatform ?? 'amazon') as 'amazon',
+      sourcePlatform: ((sourceData?.sourcePlatform ?? 'amazon').startsWith('amazon') ? 'amazon' : sourceData?.sourcePlatform ?? 'fixture') as 'amazon' | 'fixture',
       sourceIdentifier: sourceData?.sourceIdentifier ?? 'unknown',
       ingestMethod: sourceData?.ingestMethod ?? undefined,
       canonicalUrl: sourceData?.canonicalUrl ?? undefined,
@@ -91,6 +108,12 @@ export function mapDbProductToSourcedRecord(input: {
       intendedActive: input.visibility?.intendedActive ?? false,
       visibilityNotes: input.visibility?.visibilityNotes ?? undefined,
     },
+    priceHistory: priceHistorySnapshots.length > 0
+      ? {
+          summary: assessPriceTrackingHistory(priceHistorySnapshots),
+          snapshots: priceHistorySnapshots,
+        }
+      : undefined,
     stagingStatus: (reviewState?.workflowState ?? 'needs_review') as SourcedProductRecord['stagingStatus'],
   };
 }
