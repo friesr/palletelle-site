@@ -11,7 +11,9 @@
     "facts": [
       { "label": "Material", "value": "100% linen", "kind": "fact", "source": "fixture catalog" },
       { "label": "Source color", "value": "Warm ivory", "kind": "fact", "source": "fixture catalog" },
+      { "label": "Category", "value": "Shirt", "kind": "fact", "source": "fixture catalog" },
       { "label": "Palette note", "value": "Often pairs well with muted olive or clay tones", "kind": "inference", "source": "fixture heuristic" },
+      { "label": "Confidence note", "value": "Color harmony guidance is medium confidence because it is fixture-based and not validated across real photography conditions", "kind": "inference", "source": "trust fixture note" },
       { "label": "Style note", "value": "Feels relaxed but polished", "kind": "opinion", "source": "editorial fixture" }
     ]
   },
@@ -27,8 +29,28 @@
     "facts": [
       { "label": "Material", "value": "Cotton blend", "kind": "fact", "source": "fixture catalog" },
       { "label": "Source color", "value": "Soft olive", "kind": "fact", "source": "fixture catalog" },
+      { "label": "Category", "value": "Trouser", "kind": "fact", "source": "fixture catalog" },
       { "label": "Pairing note", "value": "May complement warm neutrals and subdued rosewood accents", "kind": "inference", "source": "fixture heuristic" },
+      { "label": "Confidence note", "value": "Suggested pairings are medium confidence and should be treated as directional guidance", "kind": "inference", "source": "trust fixture note" },
       { "label": "Style note", "value": "Reads more tailored than casual", "kind": "opinion", "source": "editorial fixture" }
+    ]
+  },
+  {
+    "id": "knit-001",
+    "slug": "rosewood-knit",
+    "name": "Rosewood Knit Layer",
+    "brand": "Atelier Sample",
+    "priceLabel": "$168 fixture",
+    "colorLabel": "Muted rosewood",
+    "summary": "A lower-confidence fixture item used to demonstrate cautious recommendation messaging.",
+    "confidence": "low",
+    "facts": [
+      { "label": "Material", "value": "Wool blend", "kind": "fact", "source": "fixture catalog" },
+      { "label": "Source color", "value": "Muted rosewood", "kind": "fact", "source": "fixture catalog" },
+      { "label": "Category", "value": "Knit layer", "kind": "fact", "source": "fixture catalog" },
+      { "label": "Palette note", "value": "Potentially complements soft olive and warm ivory, but the pairing confidence is limited", "kind": "inference", "source": "fixture heuristic" },
+      { "label": "Confidence note", "value": "This item is marked low confidence because the shell does not have enough evidence to make stronger cross-garment color claims", "kind": "inference", "source": "trust fixture note" },
+      { "label": "Style note", "value": "Could add warmth to a more muted ensemble", "kind": "opinion", "source": "editorial fixture" }
     ]
   }
 ]

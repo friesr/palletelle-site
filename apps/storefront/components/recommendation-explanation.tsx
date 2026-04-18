@@ -1,4 +1,12 @@
-export function RecommendationExplanation({ productName }: { productName: string }) {
+export function RecommendationExplanation({
+  productName,
+  confidence = 'medium',
+}: {
+  productName: string;
+  confidence?: 'low' | 'medium' | 'high';
+}) {
+  const lowConfidence = confidence === 'low';
+
   return (
     <aside className="rounded-3xl border border-black/10 bg-mist p-6">
       <p className="text-sm uppercase tracking-[0.25em] text-black/45">Recommendation framing</p>
@@ -15,6 +23,14 @@ export function RecommendationExplanation({ productName }: { productName: string
         <div>
           <p className="font-medium text-black">Style opinion</p>
           <p>Taste-driven commentary is presented as editorial judgment rather than objective product truth.</p>
+        </div>
+        <div className="rounded-2xl bg-white p-4">
+          <p className="font-medium text-black">Current confidence boundary</p>
+          <p className="mt-2">
+            {lowConfidence
+              ? 'This product is currently shown with low confidence. The shell intentionally avoids strong matching claims and treats guidance as tentative.'
+              : 'This product is shown with bounded confidence. Guidance may still change as better evidence or real product data becomes available.'}
+          </p>
         </div>
       </div>
     </aside>

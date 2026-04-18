@@ -40,7 +40,7 @@ No, for local reversible scaffolding.
 
 ## Next step
 
-Add initial schemas, app scaffolding, and trust-aware development conventions.
+Continue expanding the truthful storefront shell with reproducible local development workflow and stronger trust-oriented UI states.
 
 ## Structure
 
@@ -50,4 +50,6 @@ Add initial schemas, app scaffolding, and trust-aware development conventions.
 - `packages/trust/` trust-oriented helpers and policy logic
 - `docs/policies/` shared governance and trust rules
 - `docs/architecture/` system design notes
+- `docs/dev-setup.md` local reproducible setup guide
+- `docs/frontend-milestone-1.md` milestone scope and success criteria
 - `data/` local non-secret fixtures and working data

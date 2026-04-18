@@ -2,19 +2,27 @@ import Link from 'next/link';
 import { sampleProducts } from '@/lib/sample-products';
 import { ProductCard } from '@/components/product-card';
 import { RecommendationExplanation } from '@/components/recommendation-explanation';
+import { TrustSummary } from '@/components/trust-summary';
 
 export default function HomePage() {
   const featured = sampleProducts[0];
+  const lowConfidenceExample = sampleProducts.find((product) => product.confidence === 'low') ?? featured;
 
   return (
     <div className="space-y-12">
       <section className="grid gap-6 rounded-3xl bg-white p-8 shadow-sm md:grid-cols-[1.4fr_1fr]">
         <div className="space-y-4">
           <p className="text-sm uppercase tracking-[0.25em] text-black/45">Elegant, modern, clear</p>
-          <h2 className="text-4xl font-semibold leading-tight">A refined storefront that separates facts from style judgment.</h2>
+          <h2 className="text-4xl font-semibold leading-tight">A refined storefront that separates facts, inference, and style judgment.</h2>
           <p className="max-w-2xl text-base leading-7 text-black/70">
-            Atelier is being built to help customers evaluate garments and outfit ideas without hype, fake certainty, or manipulative pressure.
+            Atelier is being built to help customers evaluate garments and outfit ideas without hype, fake certainty, manipulative urgency, or invented confidence.
           </p>
+          <div className="rounded-2xl border border-black/10 bg-mist p-4 text-sm leading-6 text-black/70">
+            <p className="font-medium text-black">Current shell boundary</p>
+            <p className="mt-2">
+              This milestone uses fixture-backed products only. It is designed to show how trustworthy recommendation framing should work before real catalog integrations exist.
+            </p>
+          </div>
           <div className="flex gap-3">
             <Link className="rounded-full bg-ink px-5 py-3 text-sm font-medium text-white" href="/browse">
               Browse the shell
@@ -24,17 +32,26 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
-        <RecommendationExplanation productName={featured.name} />
+        <RecommendationExplanation productName={featured.name} confidence={featured.confidence} />
       </section>
 
-      <section className="space-y-4">
-        <div className="flex items-end justify-between">
+      <TrustSummary product={featured} />
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-4">
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-black/45">Fixture-backed sample</p>
             <h3 className="text-2xl font-semibold">Featured product card</h3>
           </div>
+          <ProductCard product={featured} />
         </div>
-        <ProductCard product={featured} />
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.25em] text-black/45">Low-confidence example</p>
+            <h3 className="text-2xl font-semibold">Cautious guidance state</h3>
+          </div>
+          <ProductCard product={lowConfidenceExample} />
+        </div>
       </section>
     </div>
   );
