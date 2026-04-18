@@ -1,6 +1,7 @@
-import type { SourcedProductRecord } from '@atelier/domain';
+import type { ProductWorkflowState, SourcedProductRecord } from '@atelier/domain';
 import { prisma } from '@/lib/db';
 import { mapDbProductToSourcedRecord } from '@/lib/services/db-mappers';
+import { optionalText, requireEnumValue, requireNonEmpty } from '@/lib/services/validators';
 
 export async function listReviewRecords(): Promise<SourcedProductRecord[]> {
   const products = await prisma.product.findMany({
@@ -10,6 +11,7 @@ export async function listReviewRecords(): Promise<SourcedProductRecord[]> {
       inferredData: true,
       reviewState: true,
       sourceHealth: true,
+      visibility: true,
     },
     orderBy: { createdAt: 'asc' },
   });
@@ -22,6 +24,7 @@ export async function listReviewRecords(): Promise<SourcedProductRecord[]> {
       inferredData: product.inferredData,
       reviewState: product.reviewState,
       sourceHealth: product.sourceHealth,
+      visibility: product.visibility,
     }),
   );
 }
@@ -35,6 +38,7 @@ export async function getReviewRecordById(id: string): Promise<SourcedProductRec
       inferredData: true,
       reviewState: true,
       sourceHealth: true,
+      visibility: true,
     },
   });
 
@@ -49,5 +53,80 @@ export async function getReviewRecordById(id: string): Promise<SourcedProductRec
     inferredData: product.inferredData,
     reviewState: product.reviewState,
     sourceHealth: product.sourceHealth,
+    visibility: product.visibility,
+  });
+}
+
+const workflowStates = ['discovered', 'normalized', 'needs_review', 'hold', 'approved', 'rejected', 'stale', 'needs_refresh'] as const;
+
+export async function updateProductReviewWorkflow(input: {
+  productId: string;
+  workflowState: string;
+  reviewerNotes?: string;
+  reviewedBy: string;
+}) {
+  requireNonEmpty(input.productId, 'Product id');
+  requireNonEmpty(input.reviewedBy, 'Reviewer');
+  const workflowState = requireEnumValue(input.workflowState, workflowStates, 'Workflow state') as ProductWorkflowState;
+
+  await prisma.productReviewState.upsert({
+    where: { productId: input.productId },
+    update: {
+      workflowState,
+      reviewerNotes: optionalText(input.reviewerNotes),
+      reviewedBy: input.reviewedBy,
+      reviewedAt: new Date(),
+    },
+    create: {
+      id: `${input.productId}-review`,
+      productId: input.productId,
+      workflowState,
+      reviewerNotes: optionalText(input.reviewerNotes),
+      reviewedBy: input.reviewedBy,
+      reviewedAt: new Date(),
+    },
+  });
+
+  if (workflowState === 'needs_refresh') {
+    await prisma.productSourceHealth.upsert({
+      where: { productId: input.productId },
+      update: {
+        needsRevalidation: true,
+        revalidationReason: 'Marked needs_refresh by admin workflow.',
+      },
+      create: {
+        id: `${input.productId}-health`,
+        productId: input.productId,
+        needsRevalidation: true,
+        revalidationReason: 'Marked needs_refresh by admin workflow.',
+      },
+    });
+  }
+}
+
+export async function updateProductVisibility(input: {
+  productId: string;
+  isPublic: boolean;
+  intendedActive: boolean;
+  visibilityNotes?: string;
+}) {
+  requireNonEmpty(input.productId, 'Product id');
+
+  await prisma.productVisibility.upsert({
+    where: { productId: input.productId },
+    update: {
+      isPublic: input.isPublic,
+      intendedActive: input.intendedActive,
+      visibilityNotes: optionalText(input.visibilityNotes),
+      lastDisplayabilityCheckAt: new Date(),
+    },
+    create: {
+      id: `${input.productId}-visibility`,
+      productId: input.productId,
+      isPublic: input.isPublic,
+      intendedActive: input.intendedActive,
+      visibilityNotes: optionalText(input.visibilityNotes),
+      lastDisplayabilityCheckAt: new Date(),
+    },
   });
 }

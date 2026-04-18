@@ -2,6 +2,7 @@ export type ProductWorkflowState =
   | 'discovered'
   | 'normalized'
   | 'needs_review'
+  | 'hold'
   | 'approved'
   | 'rejected'
   | 'stale'

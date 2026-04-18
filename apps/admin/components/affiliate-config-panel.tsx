@@ -1,4 +1,5 @@
 import type { AffiliateConnectionConfig } from '@atelier/domain';
+import { AffiliateConfigForm } from '@/components/affiliate-config-form';
 
 export function AffiliateConfigPanel({ config }: { config: AffiliateConnectionConfig }) {
   return (
@@ -41,6 +42,12 @@ export function AffiliateConfigPanel({ config }: { config: AffiliateConnectionCo
         <p style={{ ...mutedText, color: '#8A3B34' }}>
           Secrets are intentionally not stored or edited here. Live credentials/config handling remains out of scope until a reviewed integration path is approved.
         </p>
+      </section>
+
+      <section style={cardStyle}>
+        <h3 style={sectionTitle}>Editable non-secret config</h3>
+        <p style={mutedText}>Only non-secret affiliate/store settings are editable here. Secret entry or storage is intentionally excluded.</p>
+        <AffiliateConfigForm config={config} />
       </section>
     </div>
   );

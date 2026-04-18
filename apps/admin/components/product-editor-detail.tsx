@@ -1,4 +1,5 @@
 import type { SourcedProductRecord } from '@atelier/domain';
+import { ProductEditForms } from '@/components/product-edit-forms';
 
 export function ProductEditorDetail({ product }: { product: SourcedProductRecord }) {
   return (
@@ -55,9 +56,11 @@ export function ProductEditorDetail({ product }: { product: SourcedProductRecord
       <section style={cardStyle}>
         <h3 style={sectionTitle}>Editing boundary</h3>
         <p style={mutedText}>
-          Live persistence is not implemented. This scaffold exists to make future edit responsibilities explicit while preserving the separation between source truth, normalized facts, and inferred guidance.
+          Source data remains read-only. Only normalized and inferred fields are editable, and they persist only through guarded service-layer actions.
         </p>
       </section>
+
+      <ProductEditForms product={product} />
     </div>
   );
 }
