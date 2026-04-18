@@ -1,0 +1,38 @@
+<svg width="900" height="1200" viewBox="0 0 900 1200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fixture illustration of a warm ivory linen shirt">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="80" x2="780" y2="1120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6EFE4"/>
+      <stop offset="1" stop-color="#E8DDCB"/>
+    </linearGradient>
+    <linearGradient id="shirt" x1="280" y1="220" x2="620" y2="980" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF8EE"/>
+      <stop offset="1" stop-color="#EFE2CC"/>
+    </linearGradient>
+    <filter id="shadow" x="140" y="160" width="620" height="920" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="18"/>
+      <feGaussianBlur stdDeviation="22"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.28 0 0 0 0 0.22 0 0 0 0 0.14 0 0 0 0.18 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" rx="64" fill="url(#bg)"/>
+  <circle cx="710" cy="180" r="110" fill="#FFF7EA" opacity="0.85"/>
+  <circle cx="170" cy="980" r="160" fill="#D7C4A3" opacity="0.2"/>
+  <g filter="url(#shadow)">
+    <path d="M311 266L258 324L170 398L226 508L272 474V1016H628V474L674 508L730 398L642 324L589 266H311Z" fill="url(#shirt)"/>
+    <path d="M311 266L258 324L170 398L226 508L272 474V1016H628V474L674 508L730 398L642 324L589 266H311Z" stroke="#D0C1A7" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M330 262C337 351 349 395 389 449" stroke="#C9B79B" stroke-width="10" stroke-linecap="round"/>
+    <path d="M570 262C563 351 551 395 511 449" stroke="#C9B79B" stroke-width="10" stroke-linecap="round"/>
+    <path d="M450 316V1016" stroke="#D8CAB1" stroke-width="8" stroke-linecap="round"/>
+    <path d="M426 356L450 392L474 356" stroke="#CDBD9F" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M424 412L450 448L476 412" stroke="#CDBD9F" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M424 468L450 504L476 468" stroke="#CDBD9F" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M424 524L450 560L476 524" stroke="#CDBD9F" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M424 580L450 616L476 580" stroke="#CDBD9F" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <rect x="72" y="1048" width="756" height="96" rx="32" fill="#FFFFFF" opacity="0.52"/>
+  <text x="116" y="1108" fill="#624E35" font-size="34" font-family="Inter, ui-sans-serif, system-ui, sans-serif" letter-spacing="3">FIXTURE ILLUSTRATION</text>
+</svg>

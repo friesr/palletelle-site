@@ -8,6 +8,11 @@
     "colorLabel": "Warm ivory",
     "summary": "A fixture-backed lightweight shirt used to demonstrate factual labeling and confidence-aware guidance.",
     "confidence": "medium",
+    "image": {
+      "src": "/products/linen-shirt.svg",
+      "alt": "Fixture illustration of a warm ivory linen shirt",
+      "caption": "Fixture illustration, not live catalog photography"
+    },
     "provenance": {
       "dataSource": "Fixture catalog entry",
       "normalizationState": "Normalized from fixture fields into storefront shape",
@@ -40,6 +45,11 @@
     "colorLabel": "Soft olive",
     "summary": "A fixture-backed trouser example for early browse and product detail views.",
     "confidence": "medium",
+    "image": {
+      "src": "/products/tailored-trouser.svg",
+      "alt": "Fixture illustration of soft olive tailored trousers",
+      "caption": "Fixture illustration, not live catalog photography"
+    },
     "provenance": {
       "dataSource": "Fixture catalog entry",
       "normalizationState": "Normalized from fixture fields into storefront shape",
@@ -72,6 +82,11 @@
     "colorLabel": "Muted rosewood",
     "summary": "A lower-confidence fixture item used to demonstrate cautious recommendation messaging.",
     "confidence": "low",
+    "image": {
+      "src": "/products/rosewood-knit.svg",
+      "alt": "Fixture illustration of a muted rosewood knit layer",
+      "caption": "Fixture illustration, not live catalog photography"
+    },
     "provenance": {
       "dataSource": "Fixture catalog entry",
       "normalizationState": "Normalized from fixture fields into storefront shape with limited supporting evidence",

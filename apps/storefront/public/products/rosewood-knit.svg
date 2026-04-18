@@ -1,0 +1,38 @@
+<svg width="900" height="1200" viewBox="0 0 900 1200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fixture illustration of a muted rosewood knit layer">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="80" x2="780" y2="1120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F0E0DF"/>
+      <stop offset="1" stop-color="#E3C9C7"/>
+    </linearGradient>
+    <linearGradient id="knit" x1="280" y1="220" x2="620" y2="1000" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B27A77"/>
+      <stop offset="1" stop-color="#8D5754"/>
+    </linearGradient>
+    <filter id="shadow" x="140" y="160" width="620" height="930" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="18"/>
+      <feGaussianBlur stdDeviation="22"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.28 0 0 0 0 0.16 0 0 0 0 0.17 0 0 0 0.2 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" rx="64" fill="url(#bg)"/>
+  <circle cx="714" cy="176" r="110" fill="#FFF2F1" opacity="0.78"/>
+  <circle cx="184" cy="986" r="164" fill="#A46B68" opacity="0.14"/>
+  <g filter="url(#shadow)">
+    <path d="M322 260L286 334L234 444L286 484L318 452V1034H582V452L614 484L666 444L614 334L578 260H322Z" fill="url(#knit)"/>
+    <path d="M322 260L286 334L234 444L286 484L318 452V1034H582V452L614 484L666 444L614 334L578 260H322Z" stroke="#7B4A48" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M322 260C340 322 367 369 401 404" stroke="#A26A67" stroke-width="8" stroke-linecap="round"/>
+    <path d="M578 260C560 322 533 369 499 404" stroke="#A26A67" stroke-width="8" stroke-linecap="round"/>
+    <path d="M370 318H530" stroke="#D2A7A4" stroke-width="10" stroke-linecap="round" opacity="0.8"/>
+    <path d="M356 370H544" stroke="#D2A7A4" stroke-width="8" stroke-linecap="round" opacity="0.5"/>
+    <path d="M450 368V1034" stroke="#A86F6C" stroke-width="8" stroke-linecap="round"/>
+    <path d="M392 468C415 482 435 490 450 490C465 490 485 482 508 468" stroke="#C68D89" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M390 576C415 590 435 598 450 598C465 598 485 590 510 576" stroke="#C68D89" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M388 684C414 698 434 706 450 706C466 706 486 698 512 684" stroke="#C68D89" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <rect x="72" y="1048" width="756" height="96" rx="32" fill="#FFFFFF" opacity="0.52"/>
+  <text x="116" y="1108" fill="#7A4A4A" font-size="34" font-family="Inter, ui-sans-serif, system-ui, sans-serif" letter-spacing="3">FIXTURE ILLUSTRATION</text>
+</svg>

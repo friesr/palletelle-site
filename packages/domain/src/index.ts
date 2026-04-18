@@ -1,3 +1,5 @@
+export * from './sourcing';
+
 export type ConfidenceLevel = 'low' | 'medium' | 'high';
 
 export type FactKind = 'fact' | 'inference' | 'opinion';
@@ -24,6 +26,12 @@ export interface RecommendationRationale {
   subjectiveSuggestion: string;
 }
 
+export interface ProductImage {
+  src: string;
+  alt: string;
+  caption?: string;
+}
+
 export interface ProductRecord {
   id: string;
   slug: string;
@@ -35,5 +43,6 @@ export interface ProductRecord {
   confidence: ConfidenceLevel;
   provenance: ProductProvenance;
   recommendationRationale: RecommendationRationale;
+  image?: ProductImage;
   facts: ProductFact[];
 }

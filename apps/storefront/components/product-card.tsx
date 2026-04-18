@@ -5,6 +5,7 @@ import { DisclosurePanel } from '@/components/disclosure-panel';
 import { LowConfidenceNote } from '@/components/low-confidence-note';
 import { ProvenanceSummary } from '@/components/provenance-summary';
 import { RecommendationRationale } from '@/components/recommendation-rationale';
+import { ProductVisual } from '@/components/product-visual';
 
 export function ProductCard({ product }: { product: ProductRecord }) {
   const lowConfidence = product.confidence === 'low';
@@ -13,6 +14,7 @@ export function ProductCard({ product }: { product: ProductRecord }) {
   return (
     <article className="rounded-3xl bg-white p-6 shadow-sm">
       <div className="space-y-4">
+        <ProductVisual product={product} size="sm" />
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-black/45">{product.brand}</p>

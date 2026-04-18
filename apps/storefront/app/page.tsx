@@ -17,14 +17,14 @@ export default function HomePage() {
       <section className="grid gap-6 rounded-3xl bg-white p-8 shadow-sm md:grid-cols-[1.4fr_1fr]">
         <div className="space-y-4">
           <p className="text-sm uppercase tracking-[0.25em] text-black/45">Elegant, modern, clear</p>
-          <h2 className="text-4xl font-semibold leading-tight">A refined storefront that separates facts, inference, and style judgment.</h2>
+          <h2 className="text-4xl font-semibold leading-tight">Palletelle separates sourced product facts from clearly labeled style guidance.</h2>
           <p className="max-w-2xl text-base leading-7 text-black/70">
-            Atelier is being built to help customers evaluate garments and outfit ideas without hype, fake certainty, manipulative urgency, or invented confidence.
+            Palletelle is being built to help customers evaluate garments and outfit ideas without hype, fake certainty, manipulative urgency, or invented confidence.
           </p>
           <div className="rounded-2xl border border-black/10 bg-mist p-4 text-sm leading-6 text-black/70">
             <p className="font-medium text-black">Current shell boundary</p>
             <p className="mt-2">
-              This milestone uses fixture-backed products and ensemble examples only. It is designed to show how trustworthy recommendation framing should work before real catalog integrations exist.
+              This milestone uses fixture-backed products and ensemble examples only. The intended next sourcing direction is Amazon affiliate listings, with Palletelle adding clearly labeled inferred style guidance and human-reviewed merchandising.
             </p>
           </div>
           <div className="flex gap-3">
@@ -68,14 +68,14 @@ export default function HomePage() {
             <p className="text-sm uppercase tracking-[0.25em] text-black/45">Ensemble example</p>
             <h3 className="text-2xl font-semibold">Simple explained pairing</h3>
           </div>
-          <EnsembleCard ensemble={featuredEnsemble} />
+          <EnsembleCard ensemble={featuredEnsemble} products={sampleProducts} />
         </div>
         <div className="space-y-4">
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-black/45">Low-confidence ensemble</p>
             <h3 className="text-2xl font-semibold">Tentative ensemble state</h3>
           </div>
-          <EnsembleCard ensemble={lowConfidenceEnsemble} />
+          <EnsembleCard ensemble={lowConfidenceEnsemble} products={sampleProducts} />
         </div>
       </section>
     </div>
