@@ -27,6 +27,31 @@ function parseJsonArray(value?: string | null) {
   return value ? JSON.parse(value) : [];
 }
 
+function makeFallbackProductImage(title: string, subtitle: string, seed: string) {
+  const hue = Array.from(seed).reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1500" viewBox="0 0 1200 1500">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="hsl(${hue} 32% 92%)" />
+          <stop offset="100%" stop-color="hsl(${(hue + 28) % 360} 30% 84%)" />
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="1500" fill="url(#bg)" />
+      <circle cx="980" cy="220" r="210" fill="hsla(${(hue + 18) % 360}, 40%, 70%, 0.22)" />
+      <circle cx="260" cy="1240" r="280" fill="hsla(${(hue + 8) % 360}, 30%, 55%, 0.16)" />
+      <text x="90" y="1380" fill="#1f1a17" font-family="Inter, Arial, sans-serif" font-size="88" font-weight="700">${title}</text>
+      <text x="90" y="1450" fill="#4b4038" font-family="Inter, Arial, sans-serif" font-size="40">${subtitle}</text>
+    </svg>
+  `.trim();
+
+  return {
+    src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
+    alt: `${title} fixture image`,
+    caption: 'Generated fallback image for approved seed product',
+  };
+}
+
 function mapLifecycleState(product: StorefrontDbProduct): ProductLifecycleStateRecord {
   if (product.lifecycleState) {
     return {
@@ -105,6 +130,12 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
   const category = normalizedData?.category ?? 'Unspecified';
   const sourceColor = normalizedData?.sourceColor ?? 'Unknown color';
   const styleOpinion = inferredData?.styleOpinion ?? 'No editorial suggestion recorded.';
+  const fixtureImage = sampleProducts.find((item) => item.slug === product.slug)?.image;
+  const image = fixtureImage ?? makeFallbackProductImage(
+    normalizedData?.title ?? sourceData?.title ?? product.slug,
+    normalizedData?.sourceColor ?? sourceData?.colorText ?? 'Approved seed product',
+    product.slug,
+  );
   const priceTracking = assessPriceTrackingHistory(
     product.priceSnapshots
       .filter((snapshot) => !sourceData || snapshot.productSourceDataId === sourceData.id)
@@ -132,6 +163,7 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
     canonicalUrl: sourceData?.canonicalUrl ?? undefined,
     sourcePlatform: sourceData?.sourcePlatform ?? 'amazon',
     sourceIdentifier: sourceData?.sourceIdentifier ?? product.id,
+    image,
     priceTracking,
     provenance: {
       dataSource:
@@ -187,7 +219,13 @@ export async function listStorefrontProducts(): Promise<ProductRecord[]> {
     return sampleProducts;
   }
 
-  return filterVisibleStorefrontProducts(products).map(mapDbProductToStorefrontRecord);
+  const visibleProducts = filterVisibleStorefrontProducts(products);
+
+  if (visibleProducts.length === 0) {
+    return sampleProducts;
+  }
+
+  return visibleProducts.map(mapDbProductToStorefrontRecord);
 }
 
 export async function getStorefrontProductBySlug(slug: string): Promise<ProductRecord | null> {
