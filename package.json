@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev": "pnpm --filter storefront dev",
-    "build": "pnpm --filter storefront build",
-    "start": "pnpm --filter storefront start",
-    "lint": "pnpm --filter storefront lint",
-    "test": "pnpm -r test"
+    "dev": "node ~/.cache/node/corepack/v1/pnpm/9.15.0/dist/pnpm.cjs --filter storefront dev",
+    "build": "node ~/.cache/node/corepack/v1/pnpm/9.15.0/dist/pnpm.cjs --filter storefront build",
+    "start": "node ~/.cache/node/corepack/v1/pnpm/9.15.0/dist/pnpm.cjs --filter storefront start",
+    "lint": "node ~/.cache/node/corepack/v1/pnpm/9.15.0/dist/pnpm.cjs --filter storefront lint",
+    "test": "node ~/.cache/node/corepack/v1/pnpm/9.15.0/dist/pnpm.cjs -r test"
   }
 }

@@ -1,4 +1,5 @@
-import type { ConfidenceLevel, FactKind } from '@atelier/domain';
+export type ConfidenceLevel = 'low' | 'medium' | 'high';
+export type FactKind = 'fact' | 'inference' | 'opinion';
 
 export function confidenceLabel(level: ConfidenceLevel): string {
   if (level === 'high') return 'High confidence';
