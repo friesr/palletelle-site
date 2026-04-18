@@ -1,12 +1,16 @@
 import Link from 'next/link';
-import { sampleProducts } from '@/lib/sample-products';
+import { EnsembleCard } from '@/components/ensemble-card';
 import { ProductCard } from '@/components/product-card';
 import { RecommendationExplanation } from '@/components/recommendation-explanation';
 import { TrustSummary } from '@/components/trust-summary';
+import { sampleEnsembles } from '@/lib/sample-ensembles';
+import { sampleProducts } from '@/lib/sample-products';
 
 export default function HomePage() {
   const featured = sampleProducts[0];
   const lowConfidenceExample = sampleProducts.find((product) => product.confidence === 'low') ?? featured;
+  const featuredEnsemble = sampleEnsembles[0];
+  const lowConfidenceEnsemble = sampleEnsembles.find((ensemble) => ensemble.confidence === 'low') ?? featuredEnsemble;
 
   return (
     <div className="space-y-12">
@@ -20,7 +24,7 @@ export default function HomePage() {
           <div className="rounded-2xl border border-black/10 bg-mist p-4 text-sm leading-6 text-black/70">
             <p className="font-medium text-black">Current shell boundary</p>
             <p className="mt-2">
-              This milestone uses fixture-backed products only. It is designed to show how trustworthy recommendation framing should work before real catalog integrations exist.
+              This milestone uses fixture-backed products and ensemble examples only. It is designed to show how trustworthy recommendation framing should work before real catalog integrations exist.
             </p>
           </div>
           <div className="flex gap-3">
@@ -55,6 +59,23 @@ export default function HomePage() {
             <h3 className="text-2xl font-semibold">Cautious guidance state</h3>
           </div>
           <ProductCard product={lowConfidenceExample} />
+        </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.25em] text-black/45">Ensemble example</p>
+            <h3 className="text-2xl font-semibold">Simple explained pairing</h3>
+          </div>
+          <EnsembleCard ensemble={featuredEnsemble} />
+        </div>
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.25em] text-black/45">Low-confidence ensemble</p>
+            <h3 className="text-2xl font-semibold">Tentative ensemble state</h3>
+          </div>
+          <EnsembleCard ensemble={lowConfidenceEnsemble} />
         </div>
       </section>
     </div>

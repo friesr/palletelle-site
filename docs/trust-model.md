@@ -65,6 +65,8 @@ Recommendation rationale must be split into:
 
 This prevents taste and heuristic guidance from being mistaken for fact.
 
+The same structure may be used for simple ensemble examples, provided they remain fixture-backed, deterministic, and clearly non-personalized.
+
 ## What the system does not do
 
 The current shell does not:
@@ -73,3 +75,4 @@ The current shell does not:
 - infer user identity or intent
 - claim live catalog truth
 - claim validated fit or color certainty beyond the explicit fixture evidence
+- imply that ensemble suggestions are model-driven or stylist-personalized
