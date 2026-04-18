@@ -48,7 +48,6 @@ function makeFallbackProductImage(title: string, subtitle: string, seed: string)
   return {
     src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
     alt: `${title} fixture image`,
-    caption: 'Generated fallback image for approved seed product',
   };
 }
 

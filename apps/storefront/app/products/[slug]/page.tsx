@@ -1,10 +1,5 @@
 import { notFound } from 'next/navigation';
-import { LowConfidenceNote } from '@/components/low-confidence-note';
 import { ProductVisual } from '@/components/product-visual';
-import { ProductFactList } from '@/components/product-fact-list';
-import { ProvenanceSummary } from '@/components/provenance-summary';
-import { RecommendationExplanation } from '@/components/recommendation-explanation';
-import { TrustSummary } from '@/components/trust-summary';
 import { getStorefrontProductBySlug } from '@/lib/db-products';
 
 export const dynamic = 'force-dynamic';
@@ -17,8 +12,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     notFound();
   }
 
-  const lowConfidence = product.confidence === 'low';
-  const lowConfidenceReason = product.facts.find((fact) => fact.label === 'Low confidence reason')?.value;
+  const details = [
+    { label: 'Brand', value: product.brand },
+    { label: 'Material', value: product.facts.find((fact) => fact.label === 'Material')?.value ?? 'Not specified' },
+    { label: 'Color', value: product.colorLabel },
+    { label: 'Category', value: product.facts.find((fact) => fact.label === 'Category')?.value ?? 'Not specified' },
+  ];
 
   return (
     <div className="space-y-8">
@@ -31,15 +30,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <p className="mt-3 max-w-2xl text-black/70">{product.summary}</p>
           </div>
           <div className="rounded-2xl border border-black/10 bg-mist p-5 text-sm leading-6 text-black/70">
-            <p className="font-medium text-black">Purchase path</p>
-            <p className="mt-2">
-              Source platform: <span className="font-medium text-black">{product.sourcePlatform ?? 'Unknown source'}</span>
-              {product.sourceIdentifier ? (
-                <>
-                  {' '}· Source identifier: <span className="font-medium text-black">{product.sourceIdentifier}</span>
-                </>
-              ) : null}
-            </p>
+            <p className="font-medium text-black">Price</p>
+            <p className="mt-2 text-base text-black">{product.priceTracking?.currentPriceText ?? product.priceLabel}</p>
             <div className="mt-4 flex flex-wrap gap-3">
               {product.buyUrl ? (
                 <a
@@ -48,7 +40,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Buy on Amazon
+                  Buy now
                 </a>
               ) : null}
               {product.canonicalUrl ? (
@@ -62,57 +54,25 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 </a>
               ) : null}
             </div>
-            {!product.buyUrl ? (
-              <p className="mt-3 text-black/60">
-                A direct buy link is not available for this record yet.
-              </p>
-            ) : null}
-            {product.priceTracking ? (
-              <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
-                <p className="font-medium text-black">Tracked price context</p>
-                <p className="mt-2">{product.priceTracking.note}</p>
-                <p className="mt-2 text-black/60">Current price: {product.priceTracking.currentPriceText ?? product.priceLabel}</p>
-                {product.priceTracking.previousComparablePriceText ? (
-                  <p className="mt-1 text-black/60">Previously observed: {product.priceTracking.previousComparablePriceText}</p>
-                ) : null}
-                {product.priceTracking.lowestObservedPriceText && product.priceTracking.observedPriceCount >= 2 ? (
-                  <p className="mt-1 text-black/60">Lowest observed: {product.priceTracking.lowestObservedPriceText}</p>
-                ) : null}
-                {product.priceTracking.lowestObservedAt && product.priceTracking.observedPriceCount >= 2 ? (
-                  <p className="mt-1 text-black/60">Lowest observed at: {new Date(product.priceTracking.lowestObservedAt).toISOString()}</p>
-                ) : null}
-                <p className="mt-1 text-black/60">Tracked snapshots: {product.priceTracking.observedPriceCount}</p>
-              </div>
-            ) : null}
           </div>
-          <div className="rounded-2xl border border-black/10 bg-mist p-4 text-sm leading-6 text-black/70">
-            <p className="font-medium text-black">Product view boundary</p>
-            <p className="mt-2">
-              This view keeps source references, normalized fields, and inferred guidance separate. It does not claim live availability, verified fit certainty, or guaranteed color outcomes.
-            </p>
-          </div>
-          {lowConfidence ? <LowConfidenceNote reason={lowConfidenceReason ?? 'This item has limited supporting evidence in the current fixture set.'} /> : null}
         </div>
-        <RecommendationExplanation
-          productName={product.name}
-          confidence={product.confidence}
-          lowConfidenceReason={lowConfidenceReason}
-          rationale={product.recommendationRationale}
-        />
-      </section>
 
-      <TrustSummary product={product} />
-      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <ProductFactList product={product} />
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-black/10 bg-mist p-4 text-sm leading-6 text-black/70">
-            <p className="font-medium text-black">Always-visible limitation</p>
-            <p className="mt-2">
-              The main trust limit for this product is <span className="font-medium text-black">{product.provenance.uncertainAttributes[0] ?? 'limited supporting evidence'}</span>. Deeper provenance detail is available below without changing that limitation.
+        <aside className="space-y-4 rounded-3xl border border-black/10 bg-white p-6 shadow-sm">
+          <p className="text-sm uppercase tracking-[0.25em] text-black/45">Quick details</p>
+          <dl className="space-y-4 text-sm text-black/70">
+            {details.map((item) => (
+              <div key={item.label} className="flex items-start justify-between gap-4 border-b border-black/5 pb-3 last:border-b-0 last:pb-0">
+                <dt className="font-medium text-black">{item.label}</dt>
+                <dd className="text-right">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+          {product.sourcePlatform ? (
+            <p className="text-sm leading-6 text-black/60">
+              Source platform: <span className="font-medium text-black">{product.sourcePlatform}</span>
             </p>
-          </div>
-          <ProvenanceSummary provenance={product.provenance} confidence={product.confidence} />
-        </div>
+          ) : null}
+        </aside>
       </section>
     </div>
   );

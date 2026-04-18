@@ -38,7 +38,7 @@ export function ProductVisual({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/12 via-transparent to-transparent" />
         <div className="absolute left-4 top-4 rounded-full bg-white/80 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-black/60 backdrop-blur">
-          Fixture image
+          Product image
         </div>
       </div>
       {image?.caption ? (
