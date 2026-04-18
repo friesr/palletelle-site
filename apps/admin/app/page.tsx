@@ -1,10 +1,12 @@
 import { StagingQueue } from '@/components/staging-queue';
+import { SystemStatusPanel } from '@/components/system-status-panel';
 import { requireAdmin } from '@/lib/auth/session';
 import { listReviewRecords } from '@/lib/services/review-service';
+import { getAgentRuntimeStatus } from '@/lib/services/system-status-service';
 
 export default async function AdminHomePage() {
   await requireAdmin();
-  const products = await listReviewRecords();
+  const [products, status] = await Promise.all([listReviewRecords(), getAgentRuntimeStatus()]);
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>
@@ -15,6 +17,7 @@ export default async function AdminHomePage() {
           This fixture-backed admin surface exposes provenance, freshness, confidence, and review state before any listing is eligible for storefront visibility.
         </p>
       </section>
+      <SystemStatusPanel status={status} />
       <StagingQueue products={products} />
     </div>
   );
