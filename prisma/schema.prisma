@@ -18,6 +18,32 @@ enum ProductWorkflowState {
   needs_refresh
 }
 
+enum ProductIngestState {
+  manual_seeded
+  source_captured
+  normalized
+  refresh_required
+}
+
+enum ProductReviewStatus {
+  pending
+  approved
+  hold
+  rejected
+}
+
+enum ProductPreviewStatus {
+  none
+  admin_only
+  dev_customer
+}
+
+enum ProductPublishStatus {
+  unpublished
+  published
+  withdrawn
+}
+
 enum SourceStatus {
   unknown
   active
@@ -66,6 +92,8 @@ model Product {
   priceSnapshots    ProductPriceSnapshot[]
   normalizedData    ProductNormalizedData?
   inferredData      ProductInferredData?
+  lifecycleState    ProductLifecycleState?
+  lifecycleAudits   ProductLifecycleAudit[]
   reviewState       ProductReviewState?
   visibility        ProductVisibility?
   sourceHealth      ProductSourceHealth?
@@ -74,6 +102,39 @@ model Product {
   customerReviews   CustomerReview[]
   ensembleItems     EnsembleItem[]
   savedByUsers      SavedProduct[]
+}
+
+model ProductLifecycleState {
+  id             String               @id
+  productId      String               @unique
+  ingestState    ProductIngestState
+  reviewState    ProductReviewStatus
+  previewState   ProductPreviewStatus
+  publishState   ProductPublishStatus
+  stateNotes     String?
+  lastChangedAt  DateTime?
+  lastChangedBy  String?
+  product        Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductLifecycleAudit {
+  id                String               @id
+  productId         String
+  action            String
+  changedAt         DateTime
+  changedBy         String
+  fromIngestState   ProductIngestState
+  toIngestState     ProductIngestState
+  fromReviewState   ProductReviewStatus
+  toReviewState     ProductReviewStatus
+  fromPreviewState  ProductPreviewStatus
+  toPreviewState    ProductPreviewStatus
+  fromPublishState  ProductPublishStatus
+  toPublishState    ProductPublishStatus
+  reason            String?
+  product           Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, changedAt])
 }
 
 model ProductPriceSnapshot {

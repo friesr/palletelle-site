@@ -1,9 +1,12 @@
 import {
   assessPriceTrackingHistory,
+  createInitialLifecycleState,
+  deriveProductVisibilityDecision,
 } from '@atelier/domain';
 import type {
   AffiliateConnectionConfig,
   EnsembleDefinition,
+  ProductLifecycleAction,
   ProductRecord,
   SourcedProductRecord,
 } from '@atelier/domain';
@@ -14,6 +17,8 @@ import type {
   ExternalProductSignals,
   Product,
   ProductInferredData,
+  ProductLifecycleAudit,
+  ProductLifecycleState,
   ProductNormalizedData,
   ProductPriceSnapshot,
   ProductReviewState,
@@ -28,9 +33,12 @@ export function mapDbProductToSourcedRecord(input: {
   priceSnapshots?: ProductPriceSnapshot[];
   normalizedData: ProductNormalizedData | null;
   inferredData: ProductInferredData | null;
+  lifecycleState?: ProductLifecycleState | null;
+  lifecycleAudits?: ProductLifecycleAudit[];
   reviewState: ProductReviewState | null;
   sourceHealth: ProductSourceHealth | null;
   visibility?: ProductVisibility | null;
+  externalSignals?: ExternalProductSignals | null;
 }): SourcedProductRecord {
   const { product, sourceData, normalizedData, inferredData, reviewState, sourceHealth } = input;
   const priceHistorySnapshots = (input.priceSnapshots ?? [])
@@ -45,6 +53,49 @@ export function mapDbProductToSourcedRecord(input: {
       capturedAt: snapshot.capturedAt.toISOString(),
       captureMethod: snapshot.captureMethod,
     }));
+  const lifecycle = input.lifecycleState
+    ? {
+        productId: input.lifecycleState.productId,
+        ingestState: input.lifecycleState.ingestState,
+        reviewState: input.lifecycleState.reviewState,
+        previewState: input.lifecycleState.previewState,
+        publishState: input.lifecycleState.publishState,
+        stateNotes: input.lifecycleState.stateNotes ?? undefined,
+        lastChangedAt: input.lifecycleState.lastChangedAt?.toISOString(),
+        lastChangedBy: input.lifecycleState.lastChangedBy ?? undefined,
+      }
+    : createInitialLifecycleState({
+        productId: product.id,
+        ingestState: sourceData?.ingestMethod === 'manual_seed' ? 'manual_seeded' : 'normalized',
+        reviewState: reviewState?.workflowState === 'approved' ? 'approved' : reviewState?.workflowState === 'hold' ? 'hold' : reviewState?.workflowState === 'rejected' ? 'rejected' : 'pending',
+        previewState: input.visibility?.isPublic && input.visibility?.intendedActive ? 'dev_customer' : 'none',
+        publishState: 'unpublished',
+      });
+  const visibilityDecision = deriveProductVisibilityDecision({
+    lifecycle,
+    sourceHealth: input.sourceHealth
+      ? {
+          productId: input.sourceHealth.productId,
+          sourceStatus: input.sourceHealth.sourceStatus,
+          lastSourceCheckAt: input.sourceHealth.lastSourceCheckAt?.toISOString(),
+          sourceCheckResult: input.sourceHealth.sourceCheckResult ?? undefined,
+          needsRevalidation: input.sourceHealth.needsRevalidation,
+          revalidationReason: input.sourceHealth.revalidationReason ?? undefined,
+        }
+      : null,
+    externalSignals: input.externalSignals
+      ? {
+          productId: input.externalSignals.productId,
+          reputationState: input.externalSignals.reputationState,
+          lastExternalCheckAt: input.externalSignals.lastExternalCheckAt?.toISOString(),
+          repeatedComplaintPattern: input.externalSignals.repeatedComplaintPattern,
+          lowRatingRisk: input.externalSignals.lowRatingRisk,
+          recommendation: input.externalSignals.recommendation,
+          notes: input.externalSignals.notes ?? undefined,
+        }
+      : null,
+    environment: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+  });
 
   return {
     id: product.id,
@@ -108,6 +159,23 @@ export function mapDbProductToSourcedRecord(input: {
       intendedActive: input.visibility?.intendedActive ?? false,
       visibilityNotes: input.visibility?.visibilityNotes ?? undefined,
     },
+    lifecycle,
+    lifecycleAuditTrail: (input.lifecycleAudits ?? []).map((audit) => ({
+      productId: audit.productId,
+      changedAt: audit.changedAt.toISOString(),
+      changedBy: audit.changedBy,
+      action: audit.action as ProductLifecycleAction,
+      fromIngestState: audit.fromIngestState,
+      toIngestState: audit.toIngestState,
+      fromReviewState: audit.fromReviewState,
+      toReviewState: audit.toReviewState,
+      fromPreviewState: audit.fromPreviewState,
+      toPreviewState: audit.toPreviewState,
+      fromPublishState: audit.fromPublishState,
+      toPublishState: audit.toPublishState,
+      reason: audit.reason ?? undefined,
+    })),
+    visibilityDecision,
     priceHistory: priceHistorySnapshots.length > 0
       ? {
           summary: assessPriceTrackingHistory(priceHistorySnapshots),

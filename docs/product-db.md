@@ -63,6 +63,8 @@ Implemented schema entities include:
 - `ProductPriceSnapshot`
 - `ProductNormalizedData`
 - `ProductInferredData`
+- `ProductLifecycleState`
+- `ProductLifecycleAudit`
 - `ProductReviewState`
 - `ProductVisibility`
 - `ProductSourceHealth`
@@ -142,6 +144,27 @@ Displayability must remain derived from:
 - source health
 - trust/freshness rules
 - external risk recommendations where appropriate
+
+### Explicit lifecycle state
+`ProductLifecycleState`
+- explicit DB-backed lifecycle tuple for:
+  - ingest
+  - review
+  - preview
+  - publish
+
+`ProductLifecycleAudit`
+- append-only lifecycle transition audit log
+- who changed state
+- when
+- from which state tuple
+- to which state tuple
+- optional reason
+
+Current direction:
+- storefront/admin visibility should read from lifecycle-derived rules first
+- legacy `ProductReviewState` and `ProductVisibility` remain temporary compatibility mirrors during the transition
+- detailed lifecycle rules live in `docs/product-lifecycle.md`
 
 ### Source health / validation
 `ProductSourceHealth`

@@ -1,11 +1,11 @@
 import {
   assessPriceTrackingHistory,
-  assessProductDisplayability,
+  createInitialLifecycleState,
+  deriveProductVisibilityDecision,
   type ExternalProductSignalsRecord,
+  type ProductLifecycleStateRecord,
   type ProductRecord,
-  type ProductReviewStateRecord,
   type ProductSourceHealthRecord,
-  type ProductVisibilityRecord,
 } from '@atelier/domain';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
@@ -17,8 +17,7 @@ type StorefrontDbProduct = Prisma.ProductGetPayload<{
     priceSnapshots: true;
     normalizedData: true;
     inferredData: true;
-    reviewState: true;
-    visibility: true;
+    lifecycleState: true;
     sourceHealth: true;
     externalSignals: true;
   };
@@ -28,65 +27,81 @@ function parseJsonArray(value?: string | null) {
   return value ? JSON.parse(value) : [];
 }
 
-function isAdminEnabledPreview(input: {
-  reviewState: { workflowState: string } | null;
-  visibility: { isPublic: boolean; intendedActive: boolean } | null;
-}) {
-  return Boolean(
-    input.reviewState?.workflowState === 'approved' &&
-      input.visibility?.isPublic &&
-      input.visibility?.intendedActive,
-  );
+function mapLifecycleState(product: StorefrontDbProduct): ProductLifecycleStateRecord {
+  if (product.lifecycleState) {
+    return {
+      productId: product.lifecycleState.productId,
+      ingestState: product.lifecycleState.ingestState,
+      reviewState: product.lifecycleState.reviewState,
+      previewState: product.lifecycleState.previewState,
+      publishState: product.lifecycleState.publishState,
+      stateNotes: product.lifecycleState.stateNotes ?? undefined,
+      lastChangedAt: product.lifecycleState.lastChangedAt?.toISOString(),
+      lastChangedBy: product.lifecycleState.lastChangedBy ?? undefined,
+    };
+  }
+
+  const sourceData = product.sourceData[0];
+
+  return createInitialLifecycleState({
+    productId: product.id,
+    ingestState: sourceData?.ingestMethod === 'manual_seed' ? 'manual_seeded' : 'normalized',
+    reviewState: 'pending',
+    previewState: 'none',
+    publishState: 'unpublished',
+  });
 }
 
-function isStorefrontVisible(input: {
-  reviewState: ProductReviewStateRecord | null;
-  visibility: ProductVisibilityRecord | null;
-  sourceHealth: ProductSourceHealthRecord | null;
-  externalSignals: ExternalProductSignalsRecord | null;
-}) {
-  const previewEnabled = isAdminEnabledPreview({
-    reviewState: input.reviewState,
-    visibility: input.visibility,
+function mapSourceHealth(product: StorefrontDbProduct): ProductSourceHealthRecord | null {
+  if (!product.sourceHealth) {
+    return null;
+  }
+
+  return {
+    productId: product.sourceHealth.productId,
+    sourceStatus: product.sourceHealth.sourceStatus,
+    lastSourceCheckAt: product.sourceHealth.lastSourceCheckAt?.toISOString(),
+    sourceCheckResult: product.sourceHealth.sourceCheckResult ?? undefined,
+    needsRevalidation: product.sourceHealth.needsRevalidation,
+    revalidationReason: product.sourceHealth.revalidationReason ?? undefined,
+  };
+}
+
+function mapExternalSignals(product: StorefrontDbProduct): ExternalProductSignalsRecord | null {
+  if (!product.externalSignals) {
+    return null;
+  }
+
+  return {
+    productId: product.externalSignals.productId,
+    reputationState: product.externalSignals.reputationState,
+    lastExternalCheckAt: product.externalSignals.lastExternalCheckAt?.toISOString(),
+    repeatedComplaintPattern: product.externalSignals.repeatedComplaintPattern,
+    lowRatingRisk: product.externalSignals.lowRatingRisk,
+    recommendation: product.externalSignals.recommendation,
+    notes: product.externalSignals.notes ?? undefined,
+  };
+}
+
+export function getStorefrontVisibilityDecision(product: StorefrontDbProduct, environment = process.env.NODE_ENV === 'production' ? 'production' as const : 'development' as const) {
+  return deriveProductVisibilityDecision({
+    lifecycle: mapLifecycleState(product),
+    sourceHealth: mapSourceHealth(product),
+    externalSignals: mapExternalSignals(product),
+    environment,
   });
+}
 
-  if (!previewEnabled) {
-    return false;
-  }
-
-  if (process.env.NODE_ENV !== 'production') {
-    return true;
-  }
-
-  return assessProductDisplayability({
-    visibility: input.visibility ?? {
-      productId: 'unknown',
-      isPublic: false,
-      intendedActive: false,
-    },
-    reviewState: input.reviewState ?? {
-      productId: 'unknown',
-      workflowState: 'needs_review',
-    },
-    sourceHealth: input.sourceHealth ?? {
-      productId: 'unknown',
-      sourceStatus: 'unknown',
-      needsRevalidation: true,
-    },
-    externalSignals: input.externalSignals ?? {
-      productId: 'unknown',
-      reputationState: 'unknown',
-      repeatedComplaintPattern: false,
-      lowRatingRisk: false,
-      recommendation: 'none',
-    },
-  }).isDisplayable;
+export function filterVisibleStorefrontProducts(products: StorefrontDbProduct[], environment = process.env.NODE_ENV === 'production' ? 'production' as const : 'development' as const) {
+  return products.filter((product) => getStorefrontVisibilityDecision(product, environment).customerVisible);
 }
 
 function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRecord {
   const sourceData = product.sourceData[0] ?? null;
   const normalizedData = product.normalizedData;
   const inferredData = product.inferredData;
+  const lifecycle = mapLifecycleState(product);
+  const visibilityDecision = getStorefrontVisibilityDecision(product);
   const category = normalizedData?.category ?? 'Unspecified';
   const sourceColor = normalizedData?.sourceColor ?? 'Unknown color';
   const styleOpinion = inferredData?.styleOpinion ?? 'No editorial suggestion recorded.';
@@ -111,7 +126,7 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
     colorLabel: normalizedData?.sourceColor ?? sourceData?.colorText ?? 'Color pending review',
     summary:
       normalizedData?.summary ??
-      'This is an admin-enabled development preview. Core product facts may still be under review.',
+      `Lifecycle state ${lifecycle.ingestState} / ${lifecycle.reviewState} / ${lifecycle.previewState} / ${lifecycle.publishState}.`,
     confidence: (inferredData?.dataConfidence ?? 'low') as 'low' | 'medium' | 'high',
     buyUrl: sourceData?.affiliateUrl ?? sourceData?.canonicalUrl ?? undefined,
     canonicalUrl: sourceData?.canonicalUrl ?? undefined,
@@ -120,10 +135,10 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
     priceTracking,
     provenance: {
       dataSource:
-        process.env.NODE_ENV !== 'production'
-          ? 'DB-backed development preview, shown only after admin approval plus storefront enablement'
-          : 'DB-backed reviewed product record',
-      normalizationState: 'Source, normalized, and inferred layers remain separate in the database',
+        visibilityDecision.mode === 'dev_preview'
+          ? 'DB-backed development preview, shown from explicit lifecycle preview state'
+          : 'DB-backed published product record',
+      normalizationState: `Lifecycle: ${lifecycle.ingestState}; source, normalized, and inferred layers remain separate in the database`,
       confidenceReason: inferredData?.confidenceReason ?? 'No inferred confidence reason recorded.',
       confidenceImprovement: inferredData?.confidenceImprovement ?? 'Add stronger source and review evidence.',
       missingAttributes: parseJsonArray(inferredData?.missingAttributesJson),
@@ -139,6 +154,7 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
       { label: 'Source color', value: normalizedData?.sourceColor ?? sourceData?.colorText ?? 'Unknown', kind: 'fact', source: 'normalized/source DB record' },
       { label: 'Category', value: category, kind: 'fact', source: 'normalized DB record' },
       { label: 'Source identifier', value: sourceData?.sourceIdentifier ?? product.id, kind: 'fact', source: 'source DB record' },
+      { label: 'Lifecycle visibility', value: visibilityDecision.mode, kind: 'fact', source: 'lifecycle DB state' },
       ...(priceTracking.currentPriceText
         ? [{ label: 'Tracked price note', value: priceTracking.note, kind: 'fact' as const, source: 'price history DB record' }]
         : []),
@@ -160,8 +176,7 @@ export async function listStorefrontProducts(): Promise<ProductRecord[]> {
       },
       normalizedData: true,
       inferredData: true,
-      reviewState: true,
-      visibility: true,
+      lifecycleState: true,
       sourceHealth: true,
       externalSignals: true,
     },
@@ -172,51 +187,7 @@ export async function listStorefrontProducts(): Promise<ProductRecord[]> {
     return sampleProducts;
   }
 
-  return products
-    .filter((product) =>
-      isStorefrontVisible({
-        reviewState: product.reviewState
-          ? {
-              productId: product.reviewState.productId,
-              workflowState: product.reviewState.workflowState,
-              reviewedAt: product.reviewState.reviewedAt?.toISOString(),
-              reviewedBy: product.reviewState.reviewedBy ?? undefined,
-              reviewerNotes: product.reviewState.reviewerNotes ?? undefined,
-            }
-          : null,
-        visibility: product.visibility
-          ? {
-              productId: product.visibility.productId,
-              isPublic: product.visibility.isPublic,
-              intendedActive: product.visibility.intendedActive,
-              visibilityNotes: product.visibility.visibilityNotes ?? undefined,
-              lastDisplayabilityCheckAt: product.visibility.lastDisplayabilityCheckAt?.toISOString(),
-            }
-          : null,
-        sourceHealth: product.sourceHealth
-          ? {
-              productId: product.sourceHealth.productId,
-              sourceStatus: product.sourceHealth.sourceStatus,
-              lastSourceCheckAt: product.sourceHealth.lastSourceCheckAt?.toISOString(),
-              sourceCheckResult: product.sourceHealth.sourceCheckResult ?? undefined,
-              needsRevalidation: product.sourceHealth.needsRevalidation,
-              revalidationReason: product.sourceHealth.revalidationReason ?? undefined,
-            }
-          : null,
-        externalSignals: product.externalSignals
-          ? {
-              productId: product.externalSignals.productId,
-              reputationState: product.externalSignals.reputationState,
-              lastExternalCheckAt: product.externalSignals.lastExternalCheckAt?.toISOString(),
-              repeatedComplaintPattern: product.externalSignals.repeatedComplaintPattern,
-              lowRatingRisk: product.externalSignals.lowRatingRisk,
-              recommendation: product.externalSignals.recommendation,
-              notes: product.externalSignals.notes ?? undefined,
-            }
-          : null,
-      }),
-    )
-    .map(mapDbProductToStorefrontRecord);
+  return filterVisibleStorefrontProducts(products).map(mapDbProductToStorefrontRecord);
 }
 
 export async function getStorefrontProductBySlug(slug: string): Promise<ProductRecord | null> {
@@ -230,8 +201,7 @@ export async function getStorefrontProductBySlug(slug: string): Promise<ProductR
       },
       normalizedData: true,
       inferredData: true,
-      reviewState: true,
-      visibility: true,
+      lifecycleState: true,
       sourceHealth: true,
       externalSignals: true,
     },
@@ -241,49 +211,7 @@ export async function getStorefrontProductBySlug(slug: string): Promise<ProductR
     return sampleProducts.find((item) => item.slug === slug) ?? null;
   }
 
-  const visible = isStorefrontVisible({
-    reviewState: product.reviewState
-      ? {
-          productId: product.reviewState.productId,
-          workflowState: product.reviewState.workflowState,
-          reviewedAt: product.reviewState.reviewedAt?.toISOString(),
-          reviewedBy: product.reviewState.reviewedBy ?? undefined,
-          reviewerNotes: product.reviewState.reviewerNotes ?? undefined,
-        }
-      : null,
-    visibility: product.visibility
-      ? {
-          productId: product.visibility.productId,
-          isPublic: product.visibility.isPublic,
-          intendedActive: product.visibility.intendedActive,
-          visibilityNotes: product.visibility.visibilityNotes ?? undefined,
-          lastDisplayabilityCheckAt: product.visibility.lastDisplayabilityCheckAt?.toISOString(),
-        }
-      : null,
-    sourceHealth: product.sourceHealth
-      ? {
-          productId: product.sourceHealth.productId,
-          sourceStatus: product.sourceHealth.sourceStatus,
-          lastSourceCheckAt: product.sourceHealth.lastSourceCheckAt?.toISOString(),
-          sourceCheckResult: product.sourceHealth.sourceCheckResult ?? undefined,
-          needsRevalidation: product.sourceHealth.needsRevalidation,
-          revalidationReason: product.sourceHealth.revalidationReason ?? undefined,
-        }
-      : null,
-    externalSignals: product.externalSignals
-      ? {
-          productId: product.externalSignals.productId,
-          reputationState: product.externalSignals.reputationState,
-          lastExternalCheckAt: product.externalSignals.lastExternalCheckAt?.toISOString(),
-          repeatedComplaintPattern: product.externalSignals.repeatedComplaintPattern,
-          lowRatingRisk: product.externalSignals.lowRatingRisk,
-          recommendation: product.externalSignals.recommendation,
-          notes: product.externalSignals.notes ?? undefined,
-        }
-      : null,
-  });
-
-  if (!visible) {
+  if (!getStorefrontVisibilityDecision(product).customerVisible) {
     return null;
   }
 

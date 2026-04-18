@@ -20,6 +20,18 @@ function createAmazonUrls(asin: string) {
   };
 }
 
+function mapLegacyWorkflowToLifecycleReviewState(workflowState?: string | null) {
+  if (workflowState === 'approved') return 'approved' as const;
+  if (workflowState === 'hold') return 'hold' as const;
+  if (workflowState === 'rejected') return 'rejected' as const;
+  return 'pending' as const;
+}
+
+function mapLegacyWorkflowToLifecycleIngestState(workflowState?: string | null) {
+  if (workflowState === 'stale' || workflowState === 'needs_refresh') return 'refresh_required' as const;
+  return 'normalized' as const;
+}
+
 function buildPriceSnapshot(input: {
   productId: string;
   productSourceDataId: string;
@@ -101,6 +113,35 @@ async function seedFixtureProducts() {
             confidenceImprovement: fixture.provenance.confidenceImprovement,
             missingAttributesJson: JSON.stringify(fixture.provenance.missingAttributes),
             uncertainAttributesJson: JSON.stringify(fixture.provenance.uncertainAttributes),
+          },
+        },
+        lifecycleState: {
+          create: {
+            id: `${fixture.id}-lifecycle`,
+            ingestState: mapLegacyWorkflowToLifecycleIngestState(staged?.stagingStatus),
+            reviewState: mapLegacyWorkflowToLifecycleReviewState(staged?.stagingStatus),
+            previewState: 'none',
+            publishState: 'unpublished',
+            stateNotes: 'Fixture-seeded lifecycle state.',
+            lastChangedAt: staged?.provenance.reviewedAt ? new Date(staged.provenance.reviewedAt) : retrievedAt,
+            lastChangedBy: staged?.provenance.reviewedBy ?? 'seed',
+          },
+        },
+        lifecycleAudits: {
+          create: {
+            id: `${fixture.id}-audit-seed`,
+            action: 'seed_initialize',
+            changedAt: staged?.provenance.reviewedAt ? new Date(staged.provenance.reviewedAt) : retrievedAt,
+            changedBy: staged?.provenance.reviewedBy ?? 'seed',
+            fromIngestState: mapLegacyWorkflowToLifecycleIngestState(staged?.stagingStatus),
+            toIngestState: mapLegacyWorkflowToLifecycleIngestState(staged?.stagingStatus),
+            fromReviewState: mapLegacyWorkflowToLifecycleReviewState(staged?.stagingStatus),
+            toReviewState: mapLegacyWorkflowToLifecycleReviewState(staged?.stagingStatus),
+            fromPreviewState: 'none',
+            toPreviewState: 'none',
+            fromPublishState: 'unpublished',
+            toPublishState: 'unpublished',
+            reason: 'Initial lifecycle state created by seed.',
           },
         },
         reviewState: {
@@ -224,6 +265,35 @@ async function seedManualAmazonProducts() {
             confidenceImprovement: 'Fetch or manually verify source facts, then complete normalization and inferred review.',
             missingAttributesJson: JSON.stringify(['title', 'brand', 'category', 'sourceColor', 'material', 'priceText', 'availabilityText']),
             uncertainAttributesJson: JSON.stringify([]),
+          },
+        },
+        lifecycleState: {
+          create: {
+            id: `${productId}-lifecycle`,
+            ingestState: 'manual_seeded',
+            reviewState: 'pending',
+            previewState: 'none',
+            publishState: 'unpublished',
+            stateNotes: 'Manual Amazon seed awaiting normalization and review.',
+            lastChangedAt: retrievedAt,
+            lastChangedBy: 'seed',
+          },
+        },
+        lifecycleAudits: {
+          create: {
+            id: `${productId}-audit-seed`,
+            action: 'seed_initialize',
+            changedAt: retrievedAt,
+            changedBy: 'seed',
+            fromIngestState: 'manual_seeded',
+            toIngestState: 'manual_seeded',
+            fromReviewState: 'pending',
+            toReviewState: 'pending',
+            fromPreviewState: 'none',
+            toPreviewState: 'none',
+            fromPublishState: 'unpublished',
+            toPublishState: 'unpublished',
+            reason: 'Initial lifecycle state created by manual Amazon seed import.',
           },
         },
         reviewState: {

@@ -2,19 +2,20 @@ import {
   canDisplayAvailability,
   canDisplayPrice,
   isPublishable,
-  type SourcedProductRecord,
   validateForReview,
 } from '@atelier/domain';
 import { ReviewActions } from '@/components/review-actions';
-import { ReviewVisibilityForm } from '@/components/review-visibility-form';
 
-export function ReviewDetail({ product }: { product: SourcedProductRecord }) {
+export function ReviewDetail({ product }: { product: import('@atelier/domain').SourcedProductRecord }) {
   const validation = validateForReview(product);
+  const lifecycle = product.lifecycle;
+  const visibilityDecision = product.visibilityDecision;
   const badges = [
     product.source.ingestMethod,
-    product.stagingStatus,
+    lifecycle ? `${lifecycle.reviewState} review` : product.stagingStatus,
+    lifecycle?.previewState,
+    lifecycle?.publishState,
     `${product.provenance.dataConfidence} confidence`,
-    product.visibility.isPublic && product.visibility.intendedActive ? 'customer preview enabled' : 'customer preview off',
   ].filter(Boolean) as string[];
 
   return (
@@ -28,6 +29,39 @@ export function ReviewDetail({ product }: { product: SourcedProductRecord }) {
           {badges.map((badge) => (
             <span key={badge} style={pillStyle}>{badge}</span>
           ))}
+        </div>
+      </section>
+
+      <section style={gridStyle}>
+        <div style={cardStyle}>
+          <h3 style={sectionTitle}>Lifecycle state</h3>
+          {lifecycle ? (
+            <>
+              <p style={mutedText}><strong>Ingest:</strong> {lifecycle.ingestState}</p>
+              <p style={mutedText}><strong>Review:</strong> {lifecycle.reviewState}</p>
+              <p style={mutedText}><strong>Preview:</strong> {lifecycle.previewState}</p>
+              <p style={mutedText}><strong>Publish:</strong> {lifecycle.publishState}</p>
+              <p style={mutedText}><strong>Last changed:</strong> {lifecycle.lastChangedAt ?? 'unknown'} by {lifecycle.lastChangedBy ?? 'unknown'}</p>
+              <p style={mutedText}><strong>Notes:</strong> {lifecycle.stateNotes ?? 'none'}</p>
+            </>
+          ) : (
+            <p style={mutedText}>Lifecycle state has not been initialized yet.</p>
+          )}
+        </div>
+
+        <div style={cardStyle}>
+          <h3 style={sectionTitle}>Visibility decision</h3>
+          <p style={mutedText}><strong>Current mode:</strong> {visibilityDecision?.mode ?? 'not_visible'}</p>
+          <p style={mutedText}><strong>Admin preview visible:</strong> {visibilityDecision?.adminPreviewVisible ? 'yes' : 'no'}</p>
+          <p style={mutedText}><strong>Dev customer visible:</strong> {visibilityDecision?.devCustomerVisible ? 'yes' : 'no'}</p>
+          <p style={mutedText}><strong>Prod customer visible:</strong> {visibilityDecision?.prodCustomerVisible ? 'yes' : 'no'}</p>
+          <p style={mutedText}><strong>Why not customer-visible:</strong> {visibilityDecision?.reasons.join(', ') || 'currently visible'}</p>
+        </div>
+
+        <div style={cardStyle}>
+          <h3 style={sectionTitle}>State-changing actions</h3>
+          <p style={mutedText}>Only valid transitions are offered here. Review, preview, and publish remain separate lifecycle states.</p>
+          <ReviewActions productId={product.id} lifecycle={lifecycle} />
         </div>
       </section>
 
@@ -105,24 +139,26 @@ export function ReviewDetail({ product }: { product: SourcedProductRecord }) {
         <p style={mutedText}><strong>Can display availability:</strong> {canDisplayAvailability(product) ? 'yes' : 'no'}</p>
         <p style={mutedText}><strong>Publishable:</strong> {isPublishable(product) ? 'yes' : 'no'}</p>
         <p style={mutedText}><strong>Validation:</strong> {validation.valid ? 'passes review checks' : `fails: ${validation.reasons.join(', ')}`}</p>
-        <p style={mutedText}><strong>Customer preview:</strong> {product.visibility.isPublic && product.visibility.intendedActive ? 'enabled' : 'disabled'}</p>
       </section>
 
       <section style={cardStyle}>
-        <h3 style={sectionTitle}>Review actions</h3>
-        <p style={mutedText}>Use the primary action to approve and enable customer preview in one step. Hold and reject remain separate workflow states.</p>
-        <ReviewActions productId={product.id} />
-      </section>
-
-      <section style={cardStyle}>
-        <h3 style={sectionTitle}>Visibility control</h3>
-        <p style={mutedText}>Public intent is editable here, but actual displayability remains derived from review, source health, and trust rules.</p>
-        <ReviewVisibilityForm
-          productId={product.id}
-          isPublic={product.visibility.isPublic}
-          intendedActive={product.visibility.intendedActive}
-          visibilityNotes={product.visibility.visibilityNotes}
-        />
+        <h3 style={sectionTitle}>Lifecycle audit trail</h3>
+        {product.lifecycleAuditTrail?.length ? (
+          <div style={{ display: 'grid', gap: 10 }}>
+            {product.lifecycleAuditTrail.map((audit) => (
+              <div key={`${audit.productId}-${audit.changedAt}-${audit.action}`} style={snapshotCardStyle}>
+                <p style={snapshotTextStyle}><strong>When:</strong> {audit.changedAt}</p>
+                <p style={snapshotTextStyle}><strong>Who:</strong> {audit.changedBy}</p>
+                <p style={snapshotTextStyle}><strong>Action:</strong> {audit.action}</p>
+                <p style={snapshotTextStyle}><strong>From:</strong> {audit.fromIngestState} / {audit.fromReviewState} / {audit.fromPreviewState} / {audit.fromPublishState}</p>
+                <p style={snapshotTextStyle}><strong>To:</strong> {audit.toIngestState} / {audit.toReviewState} / {audit.toPreviewState} / {audit.toPublishState}</p>
+                <p style={snapshotTextStyle}><strong>Reason:</strong> {audit.reason ?? 'none'}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={mutedText}>No lifecycle transitions have been recorded yet.</p>
+        )}
       </section>
     </div>
   );

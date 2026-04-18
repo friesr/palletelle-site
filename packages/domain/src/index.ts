@@ -5,6 +5,7 @@ export * from './admin-config';
 export * from './visualizer';
 export * from './product-db';
 export * from './price-tracking';
+export * from './product-lifecycle';
 
 export type ConfidenceLevel = 'low' | 'medium' | 'high';
 

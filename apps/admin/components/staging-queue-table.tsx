@@ -20,18 +20,20 @@ export function StagingQueueTable({
             <th style={headerCellStyle}>Select</th>
             <th style={headerCellStyle}>Title</th>
             <th style={headerCellStyle}>Source</th>
-            <th style={headerCellStyle}>Review state</th>
-            <th style={headerCellStyle}>Confidence</th>
-            <th style={headerCellStyle}>Customer preview</th>
+            <th style={headerCellStyle}>Lifecycle</th>
+            <th style={headerCellStyle}>Visibility</th>
             <th style={headerCellStyle}>Review</th>
           </tr>
         </thead>
         <tbody>
           {products.map((product) => {
-            const previewEnabled = product.visibility.isPublic && product.visibility.intendedActive;
+            const lifecycle = product.lifecycle;
+            const visibilityDecision = product.visibilityDecision;
             const badges = [
               product.source.ingestMethod,
-              product.stagingStatus,
+              lifecycle?.reviewState,
+              lifecycle?.previewState,
+              lifecycle?.publishState,
               product.provenance.dataConfidence === 'low' ? 'low confidence' : undefined,
             ].filter(Boolean) as string[];
 
@@ -60,12 +62,21 @@ export function StagingQueueTable({
                   <p style={bodyTextStyle}>{product.source.sourcePlatform}</p>
                   <p style={subtleStyle}>{product.source.sourceIdentifier}</p>
                 </td>
-                <td style={cellStyle}><span style={pillStyle}>{product.stagingStatus}</span></td>
-                <td style={cellStyle}><span style={pillStyle}>{product.provenance.dataConfidence}</span></td>
                 <td style={cellStyle}>
-                  <span style={previewEnabled ? enabledPillStyle : pillStyle}>
-                    {previewEnabled ? 'enabled' : 'disabled'}
+                  {lifecycle ? (
+                    <>
+                      <p style={bodyTextStyle}>{lifecycle.ingestState} / {lifecycle.reviewState}</p>
+                      <p style={subtleStyle}>{lifecycle.previewState} / {lifecycle.publishState}</p>
+                    </>
+                  ) : (
+                    <p style={subtleStyle}>No lifecycle state</p>
+                  )}
+                </td>
+                <td style={cellStyle}>
+                  <span style={visibilityDecision?.customerVisible ? enabledPillStyle : pillStyle}>
+                    {visibilityDecision?.mode ?? 'not_visible'}
                   </span>
+                  <p style={subtleStyle}>{visibilityDecision?.reasons.join(', ') || 'customer-visible'}</p>
                 </td>
                 <td style={cellStyle}>
                   <Link href={`/review/${product.id}`} style={linkStyle}>Open</Link>

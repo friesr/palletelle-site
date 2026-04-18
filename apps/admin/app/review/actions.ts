@@ -2,74 +2,70 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth/session';
-import { updateManyProductReviewWorkflows, updateProductReviewWorkflow, updateProductVisibility } from '@/lib/services/review-service';
+import { transitionManyProductLifecycles, transitionProductLifecycle } from '@/lib/services/review-service';
 
 function getTrimmedString(formData: FormData, key: string) {
   return formData.get(key)?.toString().trim() ?? '';
 }
 
-export async function reviewWorkflowAction(formData: FormData) {
-  const session = await requireAdmin();
-  const productId = getTrimmedString(formData, 'productId');
-  const workflowState = getTrimmedString(formData, 'workflowState');
-  const reviewerNotes = getTrimmedString(formData, 'reviewerNotes');
-  const enableStorefront = formData.get('enableStorefront')?.toString() === 'true';
-
-  await updateProductReviewWorkflow({
-    productId,
-    workflowState,
-    reviewerNotes,
-    reviewedBy: session.user?.email ?? session.user?.name ?? 'admin',
-    enableStorefront,
-  });
-
+function revalidateReviewSurfaces(productId?: string) {
   revalidatePath('/');
-  revalidatePath(`/review/${productId}`);
-  revalidatePath('/products');
-  revalidatePath(`/products/${productId}`);
   revalidatePath('/browse');
+  revalidatePath('/products');
+  revalidatePath('/review');
+
+  if (productId) {
+    revalidatePath(`/review/${productId}`);
+    revalidatePath(`/products/${productId}`);
+  }
 }
 
-export async function bulkReviewWorkflowAction(formData: FormData) {
+export async function lifecycleTransitionAction(formData: FormData) {
+  const session = await requireAdmin();
+  const productId = getTrimmedString(formData, 'productId');
+  const action = getTrimmedString(formData, 'action');
+  const reason = getTrimmedString(formData, 'reason');
+
+  await transitionProductLifecycle({
+    productId,
+    action,
+    reason,
+    changedBy: session.user?.email ?? session.user?.name ?? 'admin',
+  });
+
+  revalidateReviewSurfaces(productId);
+}
+
+export async function bulkLifecycleTransitionAction(
+  _previousState: { summary?: string; results?: Array<{ productId: string; ok: boolean; message: string }> } | undefined,
+  formData: FormData,
+) {
   const session = await requireAdmin();
   const productIds = getTrimmedString(formData, 'productIds')
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
-  const workflowState = getTrimmedString(formData, 'workflowState');
-  const reviewerNotes = getTrimmedString(formData, 'reviewerNotes');
-  const enableStorefront = formData.get('enableStorefront')?.toString() === 'true';
+  const action = getTrimmedString(formData, 'action');
+  const reason = getTrimmedString(formData, 'reason');
 
-  await updateManyProductReviewWorkflows({
+  const results = await transitionManyProductLifecycles({
     productIds,
-    workflowState,
-    reviewerNotes,
-    reviewedBy: session.user?.email ?? session.user?.name ?? 'admin',
-    enableStorefront,
+    action,
+    reason,
+    changedBy: session.user?.email ?? session.user?.name ?? 'admin',
   });
 
-  revalidatePath('/');
-  revalidatePath('/browse');
-  revalidatePath('/products');
-}
+  revalidateReviewSurfaces();
 
-export async function toggleVisibilityAction(formData: FormData) {
-  await requireAdmin();
-  const productId = getTrimmedString(formData, 'productId');
-  const isPublic = formData.get('isPublic')?.toString() === 'true';
-  const intendedActive = formData.get('intendedActive')?.toString() === 'true';
-  const visibilityNotes = getTrimmedString(formData, 'visibilityNotes');
+  const successCount = results.filter((result) => result.ok).length;
+  const failureCount = results.length - successCount;
 
-  await updateProductVisibility({
-    productId,
-    isPublic,
-    intendedActive,
-    visibilityNotes,
-  });
-
-  revalidatePath('/');
-  revalidatePath(`/review/${productId}`);
-  revalidatePath('/products');
-  revalidatePath(`/products/${productId}`);
-  revalidatePath('/browse');
+  return {
+    summary: `Processed ${results.length} rows, ${successCount} succeeded, ${failureCount} failed.`,
+    results: results.map((result) => ({
+      productId: result.productId,
+      ok: result.ok,
+      message: result.message,
+    })),
+  };
 }

@@ -1,38 +1,92 @@
-import { reviewWorkflowAction } from '@/app/review/actions';
+import {
+  applyLifecycleAction,
+  type ProductLifecycleAction,
+  type ProductLifecycleStateRecord,
+} from '@atelier/domain';
+import { lifecycleTransitionAction } from '@/app/review/actions';
 
-export function ReviewActions({ productId }: { productId: string }) {
+const actionDefinitions: Array<{ action: ProductLifecycleAction; label: string; reason: string; primary?: boolean }> = [
+  {
+    action: 'mark_normalized',
+    label: 'Mark normalized',
+    reason: 'Normalized facts are ready for review.',
+  },
+  {
+    action: 'approve_review',
+    label: 'Approve review',
+    reason: 'Approved from admin lifecycle workflow.',
+  },
+  {
+    action: 'hold_review',
+    label: 'Hold review',
+    reason: 'Placed on hold from admin lifecycle workflow.',
+  },
+  {
+    action: 'reject_review',
+    label: 'Reject review',
+    reason: 'Rejected from admin lifecycle workflow.',
+  },
+  {
+    action: 'reset_review',
+    label: 'Reset to pending',
+    reason: 'Reset for another review pass.',
+  },
+  {
+    action: 'enable_admin_preview',
+    label: 'Enable admin preview',
+    reason: 'Enabled for admin-only preview.',
+  },
+  {
+    action: 'enable_dev_preview',
+    label: 'Enable dev customer preview',
+    reason: 'Enabled for development customer preview.',
+    primary: true,
+  },
+  {
+    action: 'disable_preview',
+    label: 'Disable preview',
+    reason: 'Preview disabled from admin lifecycle workflow.',
+  },
+  {
+    action: 'publish',
+    label: 'Publish',
+    reason: 'Published from admin lifecycle workflow.',
+    primary: true,
+  },
+  {
+    action: 'withdraw',
+    label: 'Withdraw',
+    reason: 'Withdrawn from customer visibility.',
+  },
+];
+
+export function ReviewActions({
+  productId,
+  lifecycle,
+}: {
+  productId: string;
+  lifecycle?: ProductLifecycleStateRecord;
+}) {
+  const availableActions = lifecycle
+    ? actionDefinitions.filter((definition) =>
+        applyLifecycleAction({
+          current: lifecycle,
+          action: definition.action,
+          changedAt: '2026-04-18T00:00:00.000Z',
+          changedBy: 'preview',
+          reason: definition.reason,
+        }).valid,
+      )
+    : actionDefinitions;
+
   return (
     <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-      {[
-        {
-          label: 'Approve + enable preview',
-          workflowState: 'approved',
-          reviewerNotes: 'Approved and enabled for customer preview from admin workflow action',
-          enableStorefront: true,
-          primary: true,
-        },
-        {
-          label: 'Approve only',
-          workflowState: 'approved',
-          reviewerNotes: 'Approved from admin workflow action',
-        },
-        {
-          label: 'Hold',
-          workflowState: 'hold',
-          reviewerNotes: 'Placed on hold from admin workflow action',
-        },
-        {
-          label: 'Reject',
-          workflowState: 'rejected',
-          reviewerNotes: 'Rejected from admin workflow action',
-        },
-      ].map((action) => (
-        <form key={action.workflowState} action={reviewWorkflowAction}>
+      {availableActions.map((definition) => (
+        <form key={definition.action} action={lifecycleTransitionAction}>
           <input type="hidden" name="productId" value={productId} />
-          <input type="hidden" name="workflowState" value={action.workflowState} />
-          <input type="hidden" name="reviewerNotes" value={action.reviewerNotes} />
-          <input type="hidden" name="enableStorefront" value={String(Boolean(action.enableStorefront))} />
-          <button style={action.primary ? primaryButtonStyle : buttonStyle} type="submit">{action.label}</button>
+          <input type="hidden" name="action" value={definition.action} />
+          <input type="hidden" name="reason" value={definition.reason} />
+          <button style={definition.primary ? primaryButtonStyle : buttonStyle} type="submit">{definition.label}</button>
         </form>
       ))}
     </section>

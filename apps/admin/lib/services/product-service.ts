@@ -13,9 +13,15 @@ export async function listEditableProducts(): Promise<SourcedProductRecord[]> {
       },
       normalizedData: true,
       inferredData: true,
+      lifecycleState: true,
+      lifecycleAudits: {
+        orderBy: { changedAt: 'desc' },
+        take: 5,
+      },
       reviewState: true,
       sourceHealth: true,
       visibility: true,
+      externalSignals: true,
     },
     orderBy: { createdAt: 'asc' },
   });
@@ -27,9 +33,12 @@ export async function listEditableProducts(): Promise<SourcedProductRecord[]> {
       priceSnapshots: product.priceSnapshots,
       normalizedData: product.normalizedData,
       inferredData: product.inferredData,
+      lifecycleState: product.lifecycleState,
+      lifecycleAudits: product.lifecycleAudits,
       reviewState: product.reviewState,
       sourceHealth: product.sourceHealth,
       visibility: product.visibility,
+      externalSignals: product.externalSignals,
     }),
   );
 }
@@ -45,9 +54,15 @@ export async function getEditableProductById(id: string): Promise<SourcedProduct
       },
       normalizedData: true,
       inferredData: true,
+      lifecycleState: true,
+      lifecycleAudits: {
+        orderBy: { changedAt: 'desc' },
+        take: 12,
+      },
       reviewState: true,
       sourceHealth: true,
       visibility: true,
+      externalSignals: true,
     },
   });
 
@@ -61,9 +76,12 @@ export async function getEditableProductById(id: string): Promise<SourcedProduct
     priceSnapshots: product.priceSnapshots,
     normalizedData: product.normalizedData,
     inferredData: product.inferredData,
+    lifecycleState: product.lifecycleState,
+    lifecycleAudits: product.lifecycleAudits,
     reviewState: product.reviewState,
     sourceHealth: product.sourceHealth,
     visibility: product.visibility,
+    externalSignals: product.externalSignals,
   });
 }
 

@@ -100,6 +100,11 @@ Current implementation:
 Future implementation:
 - DB queries or API access behind the same function names/shapes
 
+Current lifecycle note:
+- product review/publish state now routes through explicit lifecycle state and audit tables
+- admin review UI should explain lifecycle, visibility outcome, and valid transitions instead of exposing raw booleans alone
+- see `docs/product-lifecycle.md`
+
 ### 4. Domain model layer
 
 Current location:

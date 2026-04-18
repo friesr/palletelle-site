@@ -80,6 +80,9 @@ export interface SourcedProductRecord {
   provenance: ProductProvenance;
   freshness: FreshnessState;
   visibility: ProductVisibilityState;
+  lifecycle?: import('./product-lifecycle').ProductLifecycleStateRecord;
+  lifecycleAuditTrail?: import('./product-lifecycle').ProductLifecycleAuditRecord[];
+  visibilityDecision?: import('./product-lifecycle').ProductVisibilityDecision;
   priceHistory?: {
     summary: import('./price-tracking').PriceTrackingSummary;
     snapshots: import('./price-tracking').PriceSnapshotRecord[];
