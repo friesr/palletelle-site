@@ -1,9 +1,11 @@
 export function RecommendationExplanation({
   productName,
   confidence = 'medium',
+  lowConfidenceReason,
 }: {
   productName: string;
   confidence?: 'low' | 'medium' | 'high';
+  lowConfidenceReason?: string;
 }) {
   const lowConfidence = confidence === 'low';
 
@@ -31,6 +33,7 @@ export function RecommendationExplanation({
               ? 'This product is currently shown with low confidence. The shell intentionally avoids strong matching claims and treats guidance as tentative.'
               : 'This product is shown with bounded confidence. Guidance may still change as better evidence or real product data becomes available.'}
           </p>
+          {lowConfidence && lowConfidenceReason ? <p className="mt-2 text-black/70">Reason: {lowConfidenceReason}</p> : null}
         </div>
       </div>
     </aside>

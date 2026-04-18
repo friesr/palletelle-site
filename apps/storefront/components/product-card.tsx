@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import type { ProductRecord } from '@atelier/domain';
 import { ConfidenceBadge } from '@/components/confidence-badge';
+import { LowConfidenceNote } from '@/components/low-confidence-note';
 
 export function ProductCard({ product }: { product: ProductRecord }) {
   const lowConfidence = product.confidence === 'low';
+  const lowConfidenceReason = product.facts.find((fact) => fact.label === 'Low confidence reason')?.value;
 
   return (
     <article className="rounded-3xl bg-white p-6 shadow-sm">
@@ -26,14 +28,16 @@ export function ProductCard({ product }: { product: ProductRecord }) {
             <dd>{product.colorLabel}</dd>
           </div>
         </dl>
-        <div className="rounded-2xl border border-black/10 p-4 text-sm leading-6 text-black/70">
-          <p className="font-medium text-black">Trust note</p>
-          <p className="mt-2">
-            {lowConfidence
-              ? 'This item is shown with lower confidence. Treat pairing guidance as tentative and review the product detail context before making strong assumptions.'
-              : 'This item includes fixture-backed facts and bounded recommendation guidance. Inferred pairing notes are directional, not guarantees.'}
-          </p>
-        </div>
+        {lowConfidence ? (
+          <LowConfidenceNote reason={lowConfidenceReason ?? 'This item has limited supporting evidence in the current fixture set.'} />
+        ) : (
+          <div className="rounded-2xl border border-black/10 p-4 text-sm leading-6 text-black/70">
+            <p className="font-medium text-black">Trust note</p>
+            <p className="mt-2">
+              This item includes fixture-backed facts and bounded recommendation guidance. Inferred pairing notes are directional, not guarantees.
+            </p>
+          </div>
+        )}
         <div className="flex items-center justify-between pt-1">
           <p className="text-xs uppercase tracking-[0.2em] text-black/45">Fixture-backed preview</p>
           <Link className="rounded-full border border-black/15 px-4 py-2 text-sm font-medium" href={`/products/${product.slug}`}>

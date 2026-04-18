@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { sampleProducts } from '@/lib/sample-products';
+import { LowConfidenceNote } from '@/components/low-confidence-note';
 import { ProductFactList } from '@/components/product-fact-list';
 import { RecommendationExplanation } from '@/components/recommendation-explanation';
 import { TrustSummary } from '@/components/trust-summary';
@@ -13,6 +14,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   }
 
   const lowConfidence = product.confidence === 'low';
+  const lowConfidenceReason = product.facts.find((fact) => fact.label === 'Low confidence reason')?.value;
 
   return (
     <div className="space-y-8">
@@ -29,16 +31,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               This page shows fixture-backed product structure only. It does not claim live availability, verified fit certainty, or validated color matching outcomes.
             </p>
           </div>
-          {lowConfidence ? (
-            <div className="rounded-2xl border border-rosewood/20 bg-rosewood/5 p-4 text-sm leading-6 text-black/75">
-              <p className="font-medium text-black">Low-confidence caution</p>
-              <p className="mt-2">
-                This item is shown with lower confidence, so any pairing or ensemble guidance should be read as tentative. The shell is intentionally avoiding stronger claims than the evidence supports.
-              </p>
-            </div>
-          ) : null}
+          {lowConfidence ? <LowConfidenceNote reason={lowConfidenceReason ?? 'This item has limited supporting evidence in the current fixture set.'} /> : null}
         </div>
-        <RecommendationExplanation productName={product.name} confidence={product.confidence} />
+        <RecommendationExplanation
+          productName={product.name}
+          confidence={product.confidence}
+          lowConfidenceReason={lowConfidenceReason}
+        />
       </section>
 
       <TrustSummary product={product} />
