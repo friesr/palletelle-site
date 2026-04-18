@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ProductRecord } from '@atelier/domain';
 import { ConfidenceBadge } from '@/components/confidence-badge';
+import { DisclosurePanel } from '@/components/disclosure-panel';
 import { LowConfidenceNote } from '@/components/low-confidence-note';
 import { ProvenanceSummary } from '@/components/provenance-summary';
 import { RecommendationRationale } from '@/components/recommendation-rationale';
@@ -30,8 +31,24 @@ export function ProductCard({ product }: { product: ProductRecord }) {
             <dd>{product.colorLabel}</dd>
           </div>
         </dl>
-        <ProvenanceSummary provenance={product.provenance} confidence={product.confidence} compact />
-        <RecommendationRationale rationale={product.recommendationRationale} compact />
+        <div className="rounded-2xl border border-black/10 px-4 py-3 text-sm leading-6 text-black/65">
+          <p>
+            <span className="font-medium text-black">Source:</span> {product.provenance.dataSource}.{' '}
+            <span className="font-medium text-black">Confidence:</span> {product.provenance.confidenceReason}
+          </p>
+        </div>
+        <DisclosurePanel
+          title="Provenance details"
+          summary="Source, normalization, and confidence support"
+        >
+          <ProvenanceSummary provenance={product.provenance} confidence={product.confidence} compact={false} />
+        </DisclosurePanel>
+        <DisclosurePanel
+          title="Why suggested"
+          summary="Objective structure, inferred match, and subjective style note"
+        >
+          <RecommendationRationale rationale={product.recommendationRationale} compact={false} />
+        </DisclosurePanel>
         {lowConfidence ? (
           <LowConfidenceNote reason={lowConfidenceReason ?? 'This item has limited supporting evidence in the current fixture set.'} />
         ) : null}

@@ -43,8 +43,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </section>
 
       <TrustSummary product={product} />
-      <ProvenanceSummary provenance={product.provenance} confidence={product.confidence} />
-      <ProductFactList product={product} />
+      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <ProductFactList product={product} />
+        <ProvenanceSummary provenance={product.provenance} confidence={product.confidence} />
+      </section>
     </div>
   );
 }

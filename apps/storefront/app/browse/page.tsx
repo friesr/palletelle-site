@@ -14,8 +14,11 @@ export default function BrowsePage() {
         </p>
       </div>
 
-      <HowResultsWork />
-      <TrustLegend />
+      <section className="grid gap-4 lg:grid-cols-2">
+        <HowResultsWork />
+        <TrustLegend />
+      </section>
+
       <BrowseResultsShell products={sampleProducts} />
     </div>
   );
