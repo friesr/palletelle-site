@@ -28,6 +28,18 @@ export function ProductCard({ product }: { product: ProductRecord }) {
             <dt>Price</dt>
             <dd>{product.priceLabel}</dd>
           </div>
+          {product.priceTracking?.hasPriceDrop ? (
+            <div className="flex justify-between gap-4">
+              <dt>Tracked change</dt>
+              <dd>{`Dropped from ${product.priceTracking.previousComparablePriceText}`}</dd>
+            </div>
+          ) : null}
+          {product.priceTracking?.isLowestObserved ? (
+            <div className="flex justify-between gap-4">
+              <dt>Tracked low</dt>
+              <dd>{product.priceTracking.lowestObservedPriceText}</dd>
+            </div>
+          ) : null}
           <div className="flex justify-between gap-4">
             <dt>Source color</dt>
             <dd>{product.colorLabel}</dd>

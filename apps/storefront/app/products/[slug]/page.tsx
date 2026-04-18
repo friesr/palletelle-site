@@ -67,6 +67,19 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 A direct buy link is not available for this record yet.
               </p>
             ) : null}
+            {product.priceTracking ? (
+              <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
+                <p className="font-medium text-black">Tracked price context</p>
+                <p className="mt-2">{product.priceTracking.note}</p>
+                {product.priceTracking.previousComparablePriceText ? (
+                  <p className="mt-2 text-black/60">Previous tracked price: {product.priceTracking.previousComparablePriceText}</p>
+                ) : null}
+                {product.priceTracking.lowestObservedPriceText ? (
+                  <p className="mt-1 text-black/60">Lowest observed tracked price: {product.priceTracking.lowestObservedPriceText}</p>
+                ) : null}
+                <p className="mt-1 text-black/60">Tracked snapshots: {product.priceTracking.observedPriceCount}</p>
+              </div>
+            ) : null}
           </div>
           <div className="rounded-2xl border border-black/10 bg-mist p-4 text-sm leading-6 text-black/70">
             <p className="font-medium text-black">Product view boundary</p>

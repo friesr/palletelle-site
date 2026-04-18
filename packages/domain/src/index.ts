@@ -4,6 +4,7 @@ export * from './ensembles';
 export * from './admin-config';
 export * from './visualizer';
 export * from './product-db';
+export * from './price-tracking';
 
 export type ConfidenceLevel = 'low' | 'medium' | 'high';
 
@@ -50,6 +51,7 @@ export interface ProductRecord {
   canonicalUrl?: string;
   sourcePlatform?: string;
   sourceIdentifier?: string;
+  priceTracking?: import('./price-tracking').PriceTrackingSummary;
   provenance: ProductProvenance;
   recommendationRationale: RecommendationRationale;
   image?: ProductImage;

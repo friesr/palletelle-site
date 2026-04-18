@@ -1,4 +1,4 @@
-import type { SourcedProductRecord } from '@atelier/domain';
+import { parsePriceText, type SourcedProductRecord } from '@atelier/domain';
 import { prisma } from '@/lib/db';
 import { mapDbProductToSourcedRecord } from '@/lib/services/db-mappers';
 import { optionalText, requireEnumValue, requireNonEmpty } from '@/lib/services/validators';
@@ -68,31 +68,59 @@ export async function updateProductNormalizedFields(input: {
 }) {
   requireNonEmpty(input.productId, 'Product id');
   requireNonEmpty(input.title, 'Normalized title');
+  const normalizedPriceText = optionalText(input.priceText);
 
-  await prisma.productNormalizedData.upsert({
-    where: { productId: input.productId },
-    update: {
-      title: input.title,
-      brand: optionalText(input.brand),
-      category: optionalText(input.category),
-      sourceColor: optionalText(input.sourceColor),
-      material: optionalText(input.material),
-      priceText: optionalText(input.priceText),
-      availabilityText: optionalText(input.availabilityText),
-      summary: optionalText(input.summary),
-    },
-    create: {
-      id: `${input.productId}-normalized`,
-      productId: input.productId,
-      title: input.title,
-      brand: optionalText(input.brand),
-      category: optionalText(input.category),
-      sourceColor: optionalText(input.sourceColor),
-      material: optionalText(input.material),
-      priceText: optionalText(input.priceText),
-      availabilityText: optionalText(input.availabilityText),
-      summary: optionalText(input.summary),
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.productNormalizedData.upsert({
+      where: { productId: input.productId },
+      update: {
+        title: input.title,
+        brand: optionalText(input.brand),
+        category: optionalText(input.category),
+        sourceColor: optionalText(input.sourceColor),
+        material: optionalText(input.material),
+        priceText: normalizedPriceText,
+        availabilityText: optionalText(input.availabilityText),
+        summary: optionalText(input.summary),
+      },
+      create: {
+        id: `${input.productId}-normalized`,
+        productId: input.productId,
+        title: input.title,
+        brand: optionalText(input.brand),
+        category: optionalText(input.category),
+        sourceColor: optionalText(input.sourceColor),
+        material: optionalText(input.material),
+        priceText: normalizedPriceText,
+        availabilityText: optionalText(input.availabilityText),
+        summary: optionalText(input.summary),
+      },
+    });
+
+    if (normalizedPriceText) {
+      const latestPriceSnapshot = await tx.productPriceSnapshot.findFirst({
+        where: { productId: input.productId },
+        orderBy: { capturedAt: 'desc' },
+      });
+
+      if (!latestPriceSnapshot || latestPriceSnapshot.priceText !== normalizedPriceText) {
+        const parsed = parsePriceText(normalizedPriceText);
+
+        await tx.productPriceSnapshot.create({
+          data: {
+            id: `${input.productId}-price-${Date.now()}`,
+            productId: input.productId,
+            capturedAt: new Date(),
+            priceText: normalizedPriceText,
+            priceAmountCents: parsed.amountCents,
+            currencyCode: parsed.currencyCode,
+            captureMethod: 'admin_normalized_edit',
+            sourceReference: 'normalized_data.priceText',
+            notes: 'Captured from admin normalized product edit.',
+          },
+        });
+      }
+    }
   });
 }
 

@@ -1,4 +1,5 @@
 import {
+  assessPriceTrackingHistory,
   assessProductDisplayability,
   type ExternalProductSignalsRecord,
   type ProductRecord,
@@ -13,6 +14,7 @@ import { sampleProducts } from '@/lib/sample-products';
 type StorefrontDbProduct = Prisma.ProductGetPayload<{
   include: {
     sourceData: true;
+    priceSnapshots: true;
     normalizedData: true;
     inferredData: true;
     reviewState: true;
@@ -88,6 +90,15 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
   const category = normalizedData?.category ?? 'Unspecified';
   const sourceColor = normalizedData?.sourceColor ?? 'Unknown color';
   const styleOpinion = inferredData?.styleOpinion ?? 'No editorial suggestion recorded.';
+  const priceTracking = assessPriceTrackingHistory(
+    product.priceSnapshots.map((snapshot) => ({
+      priceText: snapshot.priceText,
+      priceAmountCents: snapshot.priceAmountCents ?? undefined,
+      currencyCode: snapshot.currencyCode ?? undefined,
+      capturedAt: snapshot.capturedAt.toISOString(),
+      captureMethod: snapshot.captureMethod,
+    })),
+  );
 
   return {
     id: product.id,
@@ -104,6 +115,7 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
     canonicalUrl: sourceData?.canonicalUrl ?? undefined,
     sourcePlatform: sourceData?.sourcePlatform ?? 'amazon',
     sourceIdentifier: sourceData?.sourceIdentifier ?? product.id,
+    priceTracking,
     provenance: {
       dataSource:
         process.env.NODE_ENV !== 'production'
@@ -125,6 +137,9 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
       { label: 'Source color', value: normalizedData?.sourceColor ?? sourceData?.colorText ?? 'Unknown', kind: 'fact', source: 'normalized/source DB record' },
       { label: 'Category', value: category, kind: 'fact', source: 'normalized DB record' },
       { label: 'Source identifier', value: sourceData?.sourceIdentifier ?? product.id, kind: 'fact', source: 'source DB record' },
+      ...(priceTracking.currentPriceText
+        ? [{ label: 'Tracked price note', value: priceTracking.note, kind: 'fact' as const, source: 'price history DB record' }]
+        : []),
       { label: 'Style note', value: styleOpinion, kind: 'opinion', source: 'inferred DB record' },
       ...(inferredData?.dataConfidence === 'low'
         ? [{ label: 'Low confidence reason', value: inferredData?.confidenceReason ?? 'Limited support recorded.', kind: 'fact' as const, source: 'inferred DB record' }]
@@ -137,6 +152,10 @@ export async function listStorefrontProducts(): Promise<ProductRecord[]> {
   const products = await prisma.product.findMany({
     include: {
       sourceData: true,
+      priceSnapshots: {
+        orderBy: { capturedAt: 'desc' },
+        take: 12,
+      },
       normalizedData: true,
       inferredData: true,
       reviewState: true,
@@ -203,6 +222,10 @@ export async function getStorefrontProductBySlug(slug: string): Promise<ProductR
     where: { slug },
     include: {
       sourceData: true,
+      priceSnapshots: {
+        orderBy: { capturedAt: 'desc' },
+        take: 12,
+      },
       normalizedData: true,
       inferredData: true,
       reviewState: true,

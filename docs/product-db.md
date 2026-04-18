@@ -60,6 +60,7 @@ Implemented schema entities include:
 
 - `Product`
 - `ProductSourceData`
+- `ProductPriceSnapshot`
 - `ProductNormalizedData`
 - `ProductInferredData`
 - `ProductReviewState`
@@ -93,6 +94,16 @@ Implemented schema entities include:
 - source identifier
 - retrieval timestamp
 - raw source fields and field-map snapshot
+
+### Price history
+`ProductPriceSnapshot`
+- point-in-time tracked price records
+- raw `priceText`
+- optional parsed numeric amount/currency when safely extractable
+- capture method / source reference / notes
+
+Important boundary:
+Do not claim a price drop or lowest observed price unless the DB has enough tracked numeric snapshots to support it.
 
 ### Normalized facts
 `ProductNormalizedData`

@@ -63,6 +63,7 @@ model Product {
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
   sourceData        ProductSourceData[]
+  priceSnapshots    ProductPriceSnapshot[]
   normalizedData    ProductNormalizedData?
   inferredData      ProductInferredData?
   reviewState       ProductReviewState?
@@ -75,12 +76,29 @@ model Product {
   savedByUsers      SavedProduct[]
 }
 
+model ProductPriceSnapshot {
+  id               String   @id
+  productId        String
+  capturedAt       DateTime @default(now())
+  priceText        String
+  priceAmountCents Int?
+  currencyCode     String?
+  captureMethod    String
+  sourceReference  String?
+  notes            String?
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, capturedAt])
+}
+
 model ProductSourceData {
   id                String   @id
   productId         String
   sourcePlatform    String
+  ingestMethod      String?
   sourceIdentifier  String
   canonicalUrl      String?
+  affiliateUrl      String?
   retrievedAt       DateTime
   title             String?
   categoryText      String?
