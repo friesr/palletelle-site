@@ -1,8 +1,7 @@
 import os from 'node:os';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-
-const execFileAsync = promisify(execFile);
+import { prisma } from '@/lib/db';
 
 type CommandResult = {
   ok: boolean;
@@ -11,32 +10,52 @@ type CommandResult = {
   timedOut: boolean;
 };
 
-export type AgentRuntimeStatus = {
-  overall: 'healthy' | 'attention' | 'stalled';
+export type ServiceStatus = 'running' | 'stopped' | 'degraded';
+
+export interface AgentStatusCard {
+  name: string;
+  role: string;
+  model: string;
+  module: string;
+  status: ServiceStatus;
+  lastHeartbeat: string | null;
+  lastAction: string;
+  timeoutState: string;
+  errorState?: string;
+}
+
+export interface DatabaseHealthCard {
+  name: string;
+  role: string;
+  model: string;
+  module: string;
+  status: ServiceStatus;
+  connectionStatus: 'connected' | 'disconnected' | 'degraded';
+  queryLatencyMs: number | null;
+  lastWriteTimestamp: string | null;
+  lastHeartbeat: string | null;
+  lastAction: string;
+  timeoutState: string;
+  errorState?: string;
+}
+
+export interface SystemHealthCard {
+  cpuUsagePercent: number;
+  memoryUsagePercent: number;
+  uptime: string;
+  loadAverage: string;
+}
+
+export interface OperationalControlSurface {
   checkedAt: string;
-  tui: {
-    state: 'running' | 'idle' | 'stalled' | 'stopped' | 'unknown';
-    pid: number | null;
-    stat: string | null;
-    elapsed: string | null;
-    cpu: number | null;
-    memory: number | null;
-    note: string;
-  };
-  gateway: {
-    state: 'healthy' | 'degraded' | 'stalled' | 'unknown';
-    note: string;
-  };
-  probe: {
-    state: 'responsive' | 'unresponsive';
-    note: string;
-  };
-  host: {
-    uptime: string;
-    loadAverage: string;
-    memory: string;
-  };
-};
+  agents: AgentStatusCard[];
+  database: DatabaseHealthCard;
+  system: SystemHealthCard;
+}
+
+export type AgentRuntimeStatus = OperationalControlSurface;
+
+const execFileAsync = promisify(execFile);
 
 function formatDuration(seconds: number) {
   const total = Math.max(0, Math.floor(seconds));
@@ -59,7 +78,20 @@ function formatBytes(bytes: number) {
   return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GiB`;
 }
 
-async function runCommand(command: string, args: string[], timeoutMs = 5000): Promise<CommandResult> {
+function formatTimestamp(value: string | Date | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const date = typeof value === 'string' ? new Date(value) : value;
+  return `${date.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+}
+
+function formatPercent(value: number) {
+  return `${value.toFixed(1)}%`;
+}
+
+async function runCommand(command: string, args: string[], timeoutMs = 4000): Promise<CommandResult> {
   try {
     const { stdout, stderr } = await execFileAsync(command, args, { timeout: timeoutMs, maxBuffer: 1024 * 64 });
     return { ok: true, stdout: String(stdout), stderr: String(stderr), timedOut: false };
@@ -74,106 +106,366 @@ async function runCommand(command: string, args: string[], timeoutMs = 5000): Pr
   }
 }
 
-function parseTuiProcess(stdout: string) {
-  const line = stdout.trim().split('\n').find(Boolean);
+type SystemdUnitSnapshot = {
+  activeState: string;
+  subState: string;
+  activeEnterTimestamp: string | null;
+  result: string;
+  execMainStatus: string | null;
+};
 
-  if (!line) {
-    return null;
+async function getSystemdUnitSnapshot(unit: string): Promise<SystemdUnitSnapshot> {
+  const result = await runCommand('systemctl', ['--user', 'show', unit, '-p', 'ActiveState', '-p', 'SubState', '-p', 'ActiveEnterTimestamp', '-p', 'Result', '-p', 'ExecMainStatus', '--no-pager'], 4000);
+
+  if (!result.ok) {
+    return {
+      activeState: 'inactive',
+      subState: 'dead',
+      activeEnterTimestamp: null,
+      result: result.timedOut ? 'timeout' : 'failed',
+      execMainStatus: null,
+    };
   }
 
-  const match = line.trim().match(/^(\d+)\s+(\S+)\s+(\S+)\s+([\d:.]+)\s+([\d.]+)\s+([\d.]+)\s+(.*)$/);
-
-  if (!match) {
-    return null;
-  }
-
-  const [, pidText, stat, elapsed, cpuText, memoryText, command] = match;
+  const fields = Object.fromEntries(
+    result.stdout
+      .trim()
+      .split('\n')
+      .map((line) => line.split('=', 2))
+      .filter((parts) => parts.length === 2),
+  ) as Record<string, string>;
 
   return {
-    pid: Number(pidText),
-    stat,
-    elapsed,
-    cpu: Number(cpuText),
-    memory: Number(memoryText),
-    command,
+    activeState: fields.ActiveState ?? 'inactive',
+    subState: fields.SubState ?? 'dead',
+    activeEnterTimestamp: fields.ActiveEnterTimestamp ? fields.ActiveEnterTimestamp : null,
+    result: fields.Result ?? 'unknown',
+    execMainStatus: fields.ExecMainStatus ?? null,
   };
 }
 
-function summarizeHost() {
+type HttpProbeResult = {
+  ok: boolean;
+  statusCode: number | null;
+  latencyMs: number | null;
+  error?: string;
+};
+
+async function probeHttp(url: string, timeoutMs = 2500): Promise<HttpProbeResult> {
+  const startedAt = Date.now();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      cache: 'no-store',
+      redirect: 'manual',
+      signal: controller.signal,
+    });
+
+    return {
+      ok: response.ok || response.status === 307,
+      statusCode: response.status,
+      latencyMs: Date.now() - startedAt,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'HTTP probe failed';
+    return {
+      ok: false,
+      statusCode: null,
+      latencyMs: null,
+      error: message,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+type ProductSnapshot = {
+  id: string;
+  slug: string;
+  updatedAt: Date;
+  createdAt: Date;
+  sourceData: Array<{
+    sourcePlatform: string;
+    ingestMethod: string | null;
+    retrievedAt: Date;
+  }>;
+  reviewState: {
+    workflowState: string;
+    reviewedAt: Date | null;
+    reviewedBy: string | null;
+    reviewerNotes: string | null;
+  } | null;
+  sourceHealth: {
+    sourceStatus: string;
+    lastSourceCheckAt: Date | null;
+    sourceCheckResult: string | null;
+    needsRevalidation: boolean;
+    revalidationReason: string | null;
+  } | null;
+};
+
+async function loadRecentProductSnapshots() {
+  return prisma.product.findMany({
+    take: 25,
+    orderBy: { updatedAt: 'desc' },
+    include: {
+      sourceData: {
+        orderBy: { retrievedAt: 'desc' },
+        take: 1,
+        select: {
+          sourcePlatform: true,
+          ingestMethod: true,
+          retrievedAt: true,
+        },
+      },
+      reviewState: true,
+      sourceHealth: true,
+    },
+  }) as Promise<ProductSnapshot[]>;
+}
+
+function summarizeLatestProductAction(product: ProductSnapshot | null) {
+  if (!product) {
+    return 'No catalog records yet.';
+  }
+
+  const source = product.sourceData[0];
+  const sourcePlatform = source?.sourcePlatform ?? 'unknown source';
+  const ingestMethod = source?.ingestMethod ?? 'unknown ingest';
+
+  return `Latest product ${product.slug} from ${sourcePlatform} via ${ingestMethod}.`;
+}
+
+function agentStatusFromProduct(product: ProductSnapshot | null) {
+  if (!product) {
+    return 'stopped' as const;
+  }
+
+  if (product.sourceHealth?.needsRevalidation || product.sourceHealth?.sourceStatus === 'inactive' || product.sourceHealth?.sourceStatus === 'unavailable') {
+    return 'degraded' as const;
+  }
+
+  return 'running' as const;
+}
+
+function reviewStatusFromProduct(product: ProductSnapshot | null) {
+  if (!product?.reviewState) {
+    return 'stopped' as const;
+  }
+
+  if (['hold', 'needs_refresh', 'rejected'].includes(product.reviewState.workflowState)) {
+    return 'degraded' as const;
+  }
+
+  return 'running' as const;
+}
+
+function sourceMonitorStatusFromProduct(product: ProductSnapshot | null) {
+  if (!product?.sourceHealth) {
+    return 'stopped' as const;
+  }
+
+  if (product.sourceHealth.needsRevalidation || ['inactive', 'unavailable', 'changed'].includes(product.sourceHealth.sourceStatus)) {
+    return 'degraded' as const;
+  }
+
+  return 'running' as const;
+}
+
+async function measureDatabaseHealth(): Promise<DatabaseHealthCard> {
+  const startedAt = Date.now();
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    const queryLatencyMs = Date.now() - startedAt;
+    const latestWrite = await prisma.product.findFirst({
+      orderBy: { updatedAt: 'desc' },
+      select: { updatedAt: true },
+    });
+
+    const status: ServiceStatus = queryLatencyMs > 250 ? 'degraded' : 'running';
+
+    return {
+      name: 'Isaac',
+      role: 'database health',
+      model: 'Prisma',
+      module: 'Prisma + SQLite',
+      status,
+      connectionStatus: status === 'running' ? 'connected' : 'degraded',
+      queryLatencyMs,
+      lastWriteTimestamp: formatTimestamp(latestWrite?.updatedAt),
+      lastHeartbeat: formatTimestamp(new Date()),
+      lastAction: `SELECT 1 in ${queryLatencyMs}ms`,
+      timeoutState: 'none',
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Database probe failed';
+
+    return {
+      name: 'Isaac',
+      role: 'database health',
+      model: 'Prisma',
+      module: 'Prisma + SQLite',
+      status: 'stopped',
+      connectionStatus: 'disconnected',
+      queryLatencyMs: null,
+      lastWriteTimestamp: null,
+      lastHeartbeat: null,
+      lastAction: 'Prisma query failed.',
+      timeoutState: 'timed out',
+      errorState: message,
+    };
+  }
+}
+
+function systemHealthSnapshot(): SystemHealthCard {
   const loadAverage = os.loadavg();
-  const memory = `${formatBytes(os.freemem())} free / ${formatBytes(os.totalmem())} total`;
+  const cpuCount = Math.max(1, os.cpus().length);
+  const cpuUsagePercent = Math.min(100, Math.max(0, (loadAverage[0] / cpuCount) * 100));
+  const memoryUsagePercent = Math.min(100, Math.max(0, ((os.totalmem() - os.freemem()) / os.totalmem()) * 100));
 
   return {
+    cpuUsagePercent,
+    memoryUsagePercent,
     uptime: formatDuration(os.uptime()),
     loadAverage: loadAverage.map((value) => value.toFixed(2)).join(' / '),
-    memory,
+  };
+}
+
+async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<AgentStatusCard[]> {
+  const latestProduct = productSnapshots[0] ?? null;
+  const latestReviewed = productSnapshots.find((product) => product.reviewState?.reviewedAt) ?? null;
+  const latestSourceHealth = productSnapshots.find((product) => product.sourceHealth?.lastSourceCheckAt) ?? null;
+  const latestSourceActivity = productSnapshots.find((product) => product.sourceData[0]) ?? null;
+
+  const orchestratorUnit = await getSystemdUnitSnapshot('openclaw-gateway.service');
+  const orchestratorProbe = await runCommand('timeout', ['6s', 'openclaw', 'gateway', 'status'], 7000);
+  const orchestratorHealthy = orchestratorUnit.activeState === 'active' && orchestratorUnit.subState === 'running';
+  const securityProbe = await runCommand('bash', ['-lc', 'apt list --upgradable 2>/dev/null | tail -n +2 | wc -l'], 4000);
+  const pendingUpdateCount = Number.parseInt(securityProbe.stdout.trim(), 10);
+  const securityUpdatesPending = Number.isFinite(pendingUpdateCount) ? pendingUpdateCount : 0;
+
+  const uiProbe = await probeHttp('http://127.0.0.1:3000/');
+  const adminProbe = await probeHttp('http://127.0.0.1:3001/');
+  const database = await measureDatabaseHealth();
+
+  return [
+    {
+      name: 'Milo',
+      role: 'system coordination',
+      model: 'OpenClaw Gateway',
+      module: 'OpenClaw Gateway',
+      status: orchestratorHealthy ? 'running' : orchestratorUnit.activeState === 'active' ? 'degraded' : 'stopped',
+      lastHeartbeat: orchestratorHealthy ? formatTimestamp(orchestratorUnit.activeEnterTimestamp) : null,
+      lastAction: orchestratorProbe.ok
+        ? orchestratorProbe.stdout.trim().split('\n').slice(0, 2).join(' ')
+        : `Gateway unit ${orchestratorUnit.activeState}/${orchestratorUnit.subState} (${orchestratorUnit.result}).`,
+      timeoutState: orchestratorHealthy ? 'none' : orchestratorProbe.timedOut ? 'timed out' : 'none',
+      errorState: orchestratorHealthy ? undefined : orchestratorProbe.timedOut ? 'Gateway status probe timeout.' : `systemd result=${orchestratorUnit.result}${orchestratorUnit.execMainStatus ? `, exit=${orchestratorUnit.execMainStatus}` : ''}`,
+    },
+    {
+      name: 'Noah',
+      role: 'system updates & security',
+      model: 'apt',
+      module: 'system package manager',
+      status: securityProbe.ok ? (securityUpdatesPending > 0 ? 'degraded' : 'running') : 'stopped',
+      lastHeartbeat: securityProbe.ok ? formatTimestamp(new Date()) : null,
+      lastAction: securityProbe.ok
+        ? securityUpdatesPending > 0
+          ? `Security scan found ${securityUpdatesPending} pending updates.`
+          : 'Security scan found no pending updates.'
+        : 'Package manager probe failed.',
+      timeoutState: securityProbe.timedOut ? 'timed out' : 'none',
+      errorState: securityProbe.ok ? undefined : securityProbe.stderr.trim() || 'Package manager probe timeout.',
+    },
+    {
+      name: 'Ada',
+      role: 'product ingestion & normalization',
+      model: 'Prisma',
+      module: 'Prisma',
+      status: agentStatusFromProduct(latestProduct),
+      lastHeartbeat: formatTimestamp(latestProduct?.sourceData[0]?.retrievedAt ?? latestProduct?.updatedAt ?? null),
+      lastAction: summarizeLatestProductAction(latestProduct),
+      timeoutState: 'none',
+      errorState: latestProduct?.sourceHealth?.revalidationReason ?? undefined,
+    },
+    {
+      name: 'Ruth',
+      role: 'trust and quality enforcement',
+      model: 'Prisma',
+      module: 'Prisma',
+      status: reviewStatusFromProduct(latestReviewed),
+      lastHeartbeat: formatTimestamp(latestReviewed?.reviewState?.reviewedAt ?? null),
+      lastAction: latestReviewed?.reviewState
+        ? `Latest review: ${latestReviewed.reviewState.workflowState}${latestReviewed.reviewState.reviewedBy ? ` by ${latestReviewed.reviewState.reviewedBy}` : ''}.`
+        : 'No review action recorded.',
+      timeoutState: 'none',
+      errorState: latestReviewed?.reviewState && ['hold', 'needs_refresh', 'rejected'].includes(latestReviewed.reviewState.workflowState)
+        ? latestReviewed.reviewState.reviewerNotes ?? `Workflow state ${latestReviewed.reviewState.workflowState}.`
+        : undefined,
+    },
+    {
+      name: 'Ezra',
+      role: 'external product validation',
+      model: 'Prisma',
+      module: 'Prisma',
+      status: latestSourceHealth?.sourceHealth?.needsRevalidation || ['inactive', 'unavailable', 'changed'].includes(latestSourceHealth?.sourceHealth?.sourceStatus ?? '')
+        ? 'degraded'
+        : latestSourceActivity
+          ? 'running'
+          : 'stopped',
+      lastHeartbeat: formatTimestamp(latestSourceActivity?.sourceData[0]?.retrievedAt ?? latestSourceHealth?.sourceHealth?.lastSourceCheckAt ?? null),
+      lastAction: latestSourceHealth?.sourceHealth
+        ? `Source check: ${latestSourceHealth.sourceHealth.sourceStatus}${latestSourceHealth.sourceHealth.sourceCheckResult ? `, ${latestSourceHealth.sourceHealth.sourceCheckResult}` : ''}.`
+        : latestSourceActivity?.sourceData[0]
+          ? `Source ingest observed from ${latestSourceActivity.sourceData[0].sourcePlatform} via ${latestSourceActivity.sourceData[0].ingestMethod ?? 'unknown ingest'}.`
+          : 'No source validation record yet.',
+      timeoutState: 'none',
+      errorState: latestSourceHealth?.sourceHealth?.needsRevalidation
+        ? latestSourceHealth.sourceHealth.revalidationReason ?? 'Needs revalidation.'
+        : undefined,
+    },
+    {
+      name: 'Leah',
+      role: 'frontend runtime',
+      model: 'Next.js',
+      module: 'Next.js dev',
+      status: uiProbe.ok ? 'running' : uiProbe.statusCode ? 'degraded' : 'stopped',
+      lastHeartbeat: uiProbe.ok ? formatTimestamp(new Date()) : null,
+      lastAction: uiProbe.statusCode ? `GET / -> ${uiProbe.statusCode}${uiProbe.latencyMs !== null ? ` in ${uiProbe.latencyMs}ms` : ''}` : 'Port 3000 probe failed.',
+      timeoutState: uiProbe.error?.toLowerCase().includes('timeout') ? 'timed out' : 'none',
+      errorState: uiProbe.error ?? undefined,
+    },
+    {
+      name: 'Titus',
+      role: 'admin backend',
+      model: 'Next.js',
+      module: 'Next.js dev',
+      status: adminProbe.ok ? 'running' : adminProbe.statusCode ? 'degraded' : 'stopped',
+      lastHeartbeat: adminProbe.ok ? formatTimestamp(new Date()) : null,
+      lastAction: adminProbe.statusCode ? `GET / -> ${adminProbe.statusCode}${adminProbe.latencyMs !== null ? ` in ${adminProbe.latencyMs}ms` : ''}` : 'Port 3001 probe failed.',
+      timeoutState: adminProbe.error?.toLowerCase().includes('timeout') ? 'timed out' : 'none',
+      errorState: adminProbe.error ?? undefined,
+    },
+    database,
+  ];
+}
+
+export async function getOperationalControlSurface(): Promise<OperationalControlSurface> {
+  const productSnapshots = await loadRecentProductSnapshots();
+  const agents = await buildAgentCards(productSnapshots);
+  const database = agents[agents.length - 1] as DatabaseHealthCard;
+
+  return {
+    checkedAt: formatTimestamp(new Date()) ?? new Date().toISOString(),
+    agents,
+    database,
+    system: systemHealthSnapshot(),
   };
 }
 
 export async function getAgentRuntimeStatus(): Promise<AgentRuntimeStatus> {
-  const [gatewayResult, probeResult, tuiResult] = await Promise.all([
-    runCommand('openclaw', ['gateway', 'status'], 5000),
-    runCommand('openclaw', ['status'], 5000),
-    runCommand('ps', ['-C', 'openclaw-tui', '-o', 'pid=,stat=,etime=,pcpu=,pmem=,args='], 5000),
-  ]);
-
-  const tuiProcess = parseTuiProcess(tuiResult.stdout);
-  const tuiRunning = Boolean(tuiProcess);
-  const tuiProbeResponsive = probeResult.ok && !probeResult.timedOut;
-
-  const tuiState: AgentRuntimeStatus['tui']['state'] = !tuiRunning
-    ? 'stopped'
-    : !tuiProbeResponsive
-      ? 'stalled'
-      : (tuiProcess?.cpu ?? 0) < 0.3
-        ? 'idle'
-        : 'running';
-
-  const gatewayState: AgentRuntimeStatus['gateway']['state'] = gatewayResult.ok && gatewayResult.stdout.includes('RPC probe: ok')
-    ? 'healthy'
-    : gatewayResult.timedOut
-      ? 'stalled'
-      : gatewayResult.ok
-        ? 'degraded'
-        : 'unknown';
-
-  const overall: AgentRuntimeStatus['overall'] = tuiState === 'stalled' || gatewayState === 'stalled'
-    ? 'stalled'
-    : tuiState === 'running' && gatewayState === 'healthy'
-      ? 'healthy'
-      : 'attention';
-
-  return {
-    overall,
-    checkedAt: new Date().toISOString(),
-    tui: {
-      state: tuiState,
-      pid: tuiProcess?.pid ?? null,
-      stat: tuiProcess?.stat ?? null,
-      elapsed: tuiProcess?.elapsed ?? null,
-      cpu: tuiProcess?.cpu ?? null,
-      memory: tuiProcess?.memory ?? null,
-      note: tuiRunning
-        ? tuiProbeResponsive
-          ? 'Process exists and the CLI probe returned.'
-          : 'Process exists, but the CLI probe did not return within the timeout.'
-        : 'No openclaw-tui process was found.',
-    },
-    gateway: {
-      state: gatewayState,
-      note: gatewayResult.ok
-        ? gatewayResult.stdout.trim().split('\n').slice(0, 8).join('\n')
-        : gatewayResult.timedOut
-          ? 'Gateway status command timed out.'
-          : gatewayResult.stderr.trim() || 'Gateway status command failed.',
-    },
-    probe: {
-      state: tuiProbeResponsive ? 'responsive' : 'unresponsive',
-      note: tuiProbeResponsive
-        ? 'openclaw status returned within the timeout.'
-        : 'openclaw status did not return within the timeout window.',
-    },
-    host: summarizeHost(),
-  };
+  return getOperationalControlSurface();
 }
-
