@@ -5,6 +5,7 @@ import { sampleStagedProducts } from '../apps/admin/lib/sample-staged-products';
 import { sampleEnsembleDefinitions } from '../apps/admin/lib/sample-ensemble-definitions';
 import { sampleAffiliateConfig } from '../apps/admin/lib/sample-affiliate-config';
 import { manualAmazonAsins } from './manual-amazon-seeds';
+import { manualAmazonImageSeeds } from './manual-amazon-image-seeds';
 
 const prisma = new PrismaClient();
 const retrievedAt = new Date('2026-04-18T15:00:00.000Z');
@@ -208,6 +209,8 @@ async function seedManualAmazonProducts() {
     const productId = `amazon-manual-${asin.toLowerCase()}`;
     const slug = `amazon-manual-${asin.toLowerCase()}`;
     const urls = createAmazonUrls(asin);
+    const imageSeed = manualAmazonImageSeeds.find((entry) => entry.asin === asin);
+    const seededImages = imageSeed ? [imageSeed.image, ...(imageSeed.images ?? [])].filter(Boolean) : [];
 
     await prisma.product.create({
       data: {
@@ -222,7 +225,7 @@ async function seedManualAmazonProducts() {
             canonicalUrl: urls.canonicalUrl,
             affiliateUrl: urls.affiliateUrl,
             retrievedAt,
-            title: null,
+            title: imageSeed?.title ?? null,
             categoryText: null,
             colorText: null,
             priceText: null,
@@ -232,11 +235,20 @@ async function seedManualAmazonProducts() {
               manualReviewRequired: true,
               canonicalUrl: urls.canonicalUrl,
               affiliateUrl: urls.affiliateUrl,
+              image: imageSeed?.image,
+              imageUrl: imageSeed?.image,
+              mainImage: imageSeed?.image,
+              mainImageUrl: imageSeed?.image,
+              images: seededImages,
+              additionalImages: seededImages,
+              gallery: seededImages,
             }),
             sourceFieldMapJson: JSON.stringify({
               sourceIdentifier: 'ASIN',
               canonicalUrl: 'manual_seed',
               affiliateUrl: 'manual_seed',
+              image: imageSeed ? 'manual_amazon_image_seed.image' : undefined,
+              images: imageSeed ? 'manual_amazon_image_seed.images' : undefined,
             }),
           },
         },
