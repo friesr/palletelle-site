@@ -449,6 +449,16 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
       timeoutState: adminProbe.error?.toLowerCase().includes('timeout') ? 'timed out' : 'none',
       errorState: adminProbe.error ?? undefined,
     },
+    {
+      name: 'Mark',
+      role: 'trustworthy customer acquisition',
+      model: 'Rostered agent',
+      module: 'agents/mark/AGENT.md',
+      status: 'stopped',
+      lastHeartbeat: null,
+      lastAction: 'Rostered in the agent contract, with no live runtime probe configured yet.',
+      timeoutState: 'none',
+    },
     database,
   ];
 }

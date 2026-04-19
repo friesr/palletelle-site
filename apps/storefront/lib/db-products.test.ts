@@ -119,6 +119,13 @@ describe('storefront lifecycle visibility', () => {
     expect(filtered[0].id).toBe('p1');
   });
 
+  it('keeps dev preview visible in development', () => {
+    const decision = getStorefrontVisibilityDecision(buildProduct(), 'development');
+
+    expect(decision.customerVisible).toBe(true);
+    expect(decision.mode).toBe('dev_preview');
+  });
+
   it('keeps dev preview out of production visibility', () => {
     const decision = getStorefrontVisibilityDecision(buildProduct(), 'production');
 
