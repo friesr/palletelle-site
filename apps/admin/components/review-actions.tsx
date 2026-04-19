@@ -3,7 +3,7 @@ import {
   type ProductLifecycleAction,
   type ProductLifecycleStateRecord,
 } from '@atelier/domain';
-import { lifecycleTransitionAction } from '@/app/review/actions';
+import { approveAndEnableDevPreviewAction, lifecycleTransitionAction } from '@/app/review/actions';
 
 const actionDefinitions: Array<{ action: ProductLifecycleAction; label: string; reason: string; primary?: boolean }> = [
   {
@@ -79,8 +79,33 @@ export function ReviewActions({
       )
     : actionDefinitions;
 
+  const canQuickApproveAndPreview = lifecycle
+    ? applyLifecycleAction({
+        current: lifecycle,
+        action: 'approve_review',
+        changedAt: '2026-04-18T00:00:00.000Z',
+        changedBy: 'preview',
+        reason: 'Approved from admin quick action.',
+      }).valid && applyLifecycleAction({
+        current: {
+          ...lifecycle,
+          reviewState: 'approved',
+        },
+        action: 'enable_dev_preview',
+        changedAt: '2026-04-18T00:00:00.000Z',
+        changedBy: 'preview',
+        reason: 'Enabled for development customer preview from admin quick action.',
+      }).valid
+    : false;
+
   return (
     <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+      {canQuickApproveAndPreview ? (
+        <form action={approveAndEnableDevPreviewAction}>
+          <input type="hidden" name="productId" value={productId} />
+          <button style={primaryButtonStyle} type="submit">Approve and show in storefront</button>
+        </form>
+      ) : null}
       {availableActions.map((definition) => (
         <form key={definition.action} action={lifecycleTransitionAction}>
           <input type="hidden" name="productId" value={productId} />

@@ -36,6 +36,28 @@ export async function lifecycleTransitionAction(formData: FormData) {
   revalidateReviewSurfaces(productId);
 }
 
+export async function approveAndEnableDevPreviewAction(formData: FormData) {
+  const session = await requireAdmin();
+  const productId = getTrimmedString(formData, 'productId');
+  const changedBy = session.user?.email ?? session.user?.name ?? 'admin';
+
+  await transitionProductLifecycle({
+    productId,
+    action: 'approve_review',
+    reason: 'Approved from admin quick action.',
+    changedBy,
+  });
+
+  await transitionProductLifecycle({
+    productId,
+    action: 'enable_dev_preview',
+    reason: 'Enabled for development customer preview from admin quick action.',
+    changedBy,
+  });
+
+  revalidateReviewSurfaces(productId);
+}
+
 export async function bulkLifecycleTransitionAction(
   _previousState: { summary?: string; results?: Array<{ productId: string; ok: boolean; message: string }> } | undefined,
   formData: FormData,

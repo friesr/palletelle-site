@@ -10,6 +10,9 @@ export function ReviewDetail({ product }: { product: import('@atelier/domain').S
   const validation = validateForReview(product);
   const lifecycle = product.lifecycle;
   const visibilityDecision = product.visibilityDecision;
+  const rawSnapshot = product.source.rawSnapshot ?? {};
+  const sourceImage = [rawSnapshot.image, rawSnapshot.imageUrl, rawSnapshot.mainImage, rawSnapshot.mainImageUrl]
+    .find((value) => typeof value === 'string' && value.length > 0) as string | undefined;
   const badges = [
     product.source.ingestMethod,
     lifecycle ? `${lifecycle.reviewState} review` : product.stagingStatus,
@@ -67,9 +70,24 @@ export function ReviewDetail({ product }: { product: import('@atelier/domain').S
 
       <section style={gridStyle}>
         <div style={cardStyle}>
+          <h3 style={sectionTitle}>Source links</h3>
+          <p style={mutedText}><strong>Canonical URL:</strong> {product.source.canonicalUrl ? <a href={product.source.canonicalUrl} target="_blank" rel="noreferrer">{product.source.canonicalUrl}</a> : 'unknown'}</p>
+          <p style={mutedText}><strong>Affiliate URL:</strong> {product.source.affiliateUrl ? <a href={product.source.affiliateUrl} target="_blank" rel="noreferrer">{product.source.affiliateUrl}</a> : 'unknown'}</p>
+          <p style={mutedText}><strong>Source identifier:</strong> {product.source.sourceIdentifier}</p>
+          {sourceImage ? (
+            <div style={{ marginTop: 14 }}>
+              <p style={mutedText}><strong>Source image preview:</strong></p>
+              <img src={sourceImage} alt={product.normalized.title} style={sourceImageStyle} />
+            </div>
+          ) : (
+            <p style={mutedText}>No source image URL has been captured yet.</p>
+          )}
+        </div>
+
+        <div style={cardStyle}>
           <h3 style={sectionTitle}>Raw source fields</h3>
           <p style={mutedText}><strong>Purpose:</strong> captured source truth snapshot, not normalized storefront truth.</p>
-          {Object.entries(product.source.rawSnapshot ?? {}).map(([key, value]) => (
+          {Object.entries(rawSnapshot).map(([key, value]) => (
             <p key={key} style={mutedText}><strong>{key}:</strong> {value ?? 'unknown'}</p>
           ))}
         </div>
@@ -217,4 +235,14 @@ const snapshotTextStyle: React.CSSProperties = {
   fontSize: 13,
   lineHeight: 1.6,
   color: 'rgba(0,0,0,0.72)',
+};
+
+const sourceImageStyle: React.CSSProperties = {
+  marginTop: 10,
+  maxWidth: '100%',
+  maxHeight: 320,
+  borderRadius: 16,
+  border: '1px solid rgba(0,0,0,0.08)',
+  objectFit: 'contain',
+  background: '#fff',
 };
