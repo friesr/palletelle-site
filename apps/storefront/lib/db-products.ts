@@ -28,8 +28,13 @@ function parseJsonArray(value?: string | null) {
 }
 
 function getStorefrontRuntimeEnvironment(): 'development' | 'production' {
-  const configured = process.env.ATELIER_STORE_ENV ?? process.env.NEXT_PUBLIC_STORE_ENV ?? process.env.NODE_ENV;
-  return configured === 'production' ? 'production' : 'development';
+  const configured = process.env.ATELIER_STORE_ENV ?? process.env.NEXT_PUBLIC_STORE_ENV;
+
+  if (configured === 'production' || configured === 'development') {
+    return configured;
+  }
+
+  return process.env.ATELIER_PUBLIC_STORE === 'true' ? 'production' : 'development';
 }
 
 function makeFallbackProductImage(title: string, subtitle: string, seed: string) {
