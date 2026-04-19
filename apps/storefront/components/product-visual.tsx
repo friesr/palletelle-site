@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import type { ProductRecord } from '@atelier/domain';
 
 const frameStyles = {
@@ -20,13 +19,12 @@ export function ProductVisual({
     <figure className={`overflow-hidden border border-black/10 bg-white ${frameStyles[size]}`}>
       <div className="relative h-full w-full">
         {image ? (
-          <Image
+          <img
             src={image.src}
             alt={image.alt}
-            fill
-            className="object-cover"
-            sizes={size === 'lg' ? '(min-width: 1024px) 560px, 100vw' : '(min-width: 768px) 360px, 100vw'}
-            unoptimized
+            className="h-full w-full object-cover"
+            loading="lazy"
+            referrerPolicy="no-referrer"
           />
         ) : (
           <div className="flex h-full items-end bg-mist p-5">
