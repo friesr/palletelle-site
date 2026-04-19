@@ -52,9 +52,13 @@ function makeFallbackProductImage(title: string, subtitle: string, seed: string)
 }
 
 function getStorefrontSourcePriority(sourcePlatform?: string | null) {
-  if (sourcePlatform?.startsWith('amazon_manual')) return 0;
-  if (sourcePlatform?.startsWith('amazon')) return 1;
+  if (sourcePlatform?.startsWith('amazon')) return 0;
+  if (sourcePlatform?.startsWith('fixture')) return 1;
   return 2;
+}
+
+export function isManualReviewPlaceholder(product: StorefrontDbProduct) {
+  return /^Manual review required \(.+\)$/i.test(product.normalizedData?.title?.trim() ?? '');
 }
 
 export function prioritizeStorefrontProducts<T extends { createdAt: Date; sourceData: Array<{ sourcePlatform: string } | null> }>(products: T[]) {
@@ -238,12 +242,13 @@ export async function listStorefrontProducts(): Promise<ProductRecord[]> {
   }
 
   const visibleProducts = prioritizeStorefrontProducts(filterVisibleStorefrontProducts(products));
+  const customerFacingProducts = visibleProducts.filter((product) => !isManualReviewPlaceholder(product));
 
-  if (visibleProducts.length === 0) {
+  if (customerFacingProducts.length === 0) {
     return sampleProducts;
   }
 
-  return visibleProducts.map(mapDbProductToStorefrontRecord);
+  return customerFacingProducts.map(mapDbProductToStorefrontRecord);
 }
 
 export async function getStorefrontProductBySlug(slug: string): Promise<ProductRecord | null> {
@@ -268,6 +273,10 @@ export async function getStorefrontProductBySlug(slug: string): Promise<ProductR
   }
 
   if (!getStorefrontVisibilityDecision(product).customerVisible) {
+    return null;
+  }
+
+  if (isManualReviewPlaceholder(product)) {
     return null;
   }
 
