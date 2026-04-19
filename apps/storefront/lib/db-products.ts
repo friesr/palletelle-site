@@ -11,6 +11,8 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { sampleProducts } from '@/lib/sample-products';
 
+const TESTBED_EMPTY_DB_FALLBACK = process.env.ATELIER_ENABLE_SAMPLE_FALLBACK !== 'false';
+
 type StorefrontDbProduct = Prisma.ProductGetPayload<{
   include: {
     sourceData: true;
@@ -27,14 +29,62 @@ function parseJsonArray(value?: string | null) {
   return value ? JSON.parse(value) : [];
 }
 
-function getStorefrontRuntimeEnvironment(): 'development' | 'production' {
-  const configured = process.env.ATELIER_STORE_ENV ?? process.env.NEXT_PUBLIC_STORE_ENV;
+function isPrivateTestbedHost(host?: string | null) {
+  if (!host) return false;
+
+  const normalizedHost = host.split(',')[0]?.trim().toLowerCase();
+  if (!normalizedHost) return false;
+
+  const hostname = normalizedHost.split(':')[0];
+
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname.endsWith('.local') ||
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('10.') ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+  );
+}
+
+export function resolveStorefrontRuntimeEnvironment(input: {
+  host?: string | null;
+  configured?: string | null;
+  nextPublicStoreEnv?: string | null;
+  appEnv?: string | null;
+  publicStoreFlag?: string | null;
+  nodeEnv?: string | null;
+} = {}): 'development' | 'production' {
+  if (isPrivateTestbedHost(input.host)) {
+    return 'development';
+  }
+
+  const configured = input.configured ?? input.nextPublicStoreEnv;
 
   if (configured === 'production' || configured === 'development') {
     return configured;
   }
 
-  return process.env.ATELIER_PUBLIC_STORE === 'true' ? 'production' : 'development';
+  if (input.appEnv === 'production' || input.appEnv === 'development') {
+    return input.appEnv;
+  }
+
+  if (input.nodeEnv && input.nodeEnv !== 'production') {
+    return 'development';
+  }
+
+  return input.publicStoreFlag === 'true' ? 'production' : 'development';
+}
+
+function getStorefrontRuntimeEnvironment(): 'development' | 'production' {
+  return resolveStorefrontRuntimeEnvironment({
+    configured: process.env.ATELIER_STORE_ENV,
+    nextPublicStoreEnv: process.env.NEXT_PUBLIC_STORE_ENV,
+    appEnv: process.env.NEXT_PUBLIC_APP_ENV,
+    publicStoreFlag: process.env.ATELIER_PUBLIC_STORE,
+    nodeEnv: process.env.NODE_ENV,
+  });
 }
 
 function makeFallbackProductImage(title: string, subtitle: string, seed: string) {
@@ -249,7 +299,7 @@ export async function listStorefrontProducts(): Promise<ProductRecord[]> {
   });
 
   if (products.length === 0) {
-    return sampleProducts;
+    return TESTBED_EMPTY_DB_FALLBACK ? sampleProducts : [];
   }
 
   const visibleProducts = prioritizeStorefrontProducts(filterVisibleStorefrontProducts(products, runtimeEnvironment));
@@ -258,7 +308,11 @@ export async function listStorefrontProducts(): Promise<ProductRecord[]> {
     : visibleProducts;
 
   if (customerFacingProducts.length === 0) {
-    return sampleProducts;
+    if (runtimeEnvironment === 'development' && TESTBED_EMPTY_DB_FALLBACK) {
+      return sampleProducts;
+    }
+
+    return [];
   }
 
   return customerFacingProducts.map(mapDbProductToStorefrontRecord);

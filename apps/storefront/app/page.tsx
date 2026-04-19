@@ -9,6 +9,23 @@ export default async function HomePage() {
   const featured = products[0];
   const secondary = products[1] ?? featured;
 
+  if (!featured) {
+    return (
+      <div className="space-y-8 rounded-3xl bg-white p-8 shadow-sm">
+        <div>
+          <p className="text-sm uppercase tracking-[0.25em] text-black/45">Palletelle</p>
+          <h2 className="mt-2 text-3xl font-semibold">No storefront products are visible yet</h2>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-black/70">
+            The catalog is currently empty for this runtime. This usually means the current database has no visible records yet, or the lifecycle state does not allow customer preview.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-black/10 bg-mist p-5 text-sm leading-6 text-black/70">
+          For the LAN testbed, approved products should normally appear here. If they do not, check the storefront database path and product lifecycle preview state.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-12">
       <section className="grid gap-6 rounded-3xl bg-white p-8 shadow-sm md:grid-cols-[1.4fr_1fr]">

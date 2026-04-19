@@ -1,4 +1,5 @@
 import { BrowseResultsShell } from '@/components/browse-results-shell';
+import { EmptyState } from '@/components/empty-state';
 import { listStorefrontProducts } from '@/lib/db-products';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +15,16 @@ export default async function BrowsePage() {
         <p className="mt-2 max-w-2xl text-black/70">Browse the current approved product set.</p>
       </div>
 
-      <BrowseResultsShell products={products} />
+      {products.length > 0 ? (
+        <BrowseResultsShell products={products} />
+      ) : (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-black/10 bg-mist px-4 py-3 text-sm leading-6 text-black/70">
+            No products are customer-visible in the current storefront runtime yet. Check the DB path, lifecycle preview state, and source visibility gates.
+          </div>
+          <EmptyState />
+        </div>
+      )}
     </div>
   );
 }
