@@ -2,11 +2,13 @@ import {
   applyLifecycleAction,
   buildLifecycleAuditRecord,
   createInitialLifecycleState,
+  type LifecycleTransitionContext,
   type ProductLifecycleAction,
   type ProductLifecycleStateRecord,
   type SourcedProductRecord,
 } from '@atelier/domain';
 import type { Prisma } from '@prisma/client';
+import { requireAdmin } from '@/lib/auth/session';
 import { prisma } from '@/lib/db';
 import { mapDbProductToSourcedRecord } from '@/lib/services/db-mappers';
 import { optionalText, requireEnumValue, requireNonEmpty } from '@/lib/services/validators';
@@ -159,6 +161,33 @@ function buildLifecycleFromLegacy(product: {
   });
 }
 
+function hasSourceCapture(product: {
+  sourceData?: Array<{ rawSnapshotJson?: string | null; title?: string | null; canonicalUrl?: string | null }>;
+}): boolean {
+  const sourceData = product.sourceData?.[0];
+  if (!sourceData) return false;
+
+  let rawSnapshot: Record<string, unknown> = {};
+  if (sourceData.rawSnapshotJson) {
+    try {
+      rawSnapshot = JSON.parse(sourceData.rawSnapshotJson) as Record<string, unknown>;
+    } catch {
+      rawSnapshot = {};
+    }
+  }
+
+  const primaryImage = [rawSnapshot.image, rawSnapshot.imageUrl, rawSnapshot.mainImage, rawSnapshot.mainImageUrl]
+    .find((value) => typeof value === 'string' && value.trim().length > 0);
+
+  const gallery = [rawSnapshot.images, rawSnapshot.additionalImages, rawSnapshot.gallery]
+    .find((value) => Array.isArray(value) && value.some((entry) => typeof entry === 'string' && entry.trim().length > 0));
+
+  const hasTitle = Boolean(sourceData.title?.trim());
+  const hasCanonicalUrl = Boolean(sourceData.canonicalUrl?.trim());
+
+  return Boolean(hasCanonicalUrl && (hasTitle || primaryImage || gallery));
+}
+
 function mapLifecycleToLegacyWorkflowState(state: ProductLifecycleStateRecord) {
   if (state.reviewState === 'approved') return 'approved';
   if (state.reviewState === 'hold') return 'hold';
@@ -304,12 +333,17 @@ export async function transitionManyProductLifecycles(input: {
           }
         : buildLifecycleFromLegacy(product);
 
+      const context: LifecycleTransitionContext = {
+        hasSourceCapture: hasSourceCapture(product),
+      };
+
       const transition = applyLifecycleAction({
         current,
         action,
         changedAt: changedAt.toISOString(),
         changedBy: input.changedBy,
         reason,
+        context,
       });
 
       if (!transition.valid || !transition.nextState) {
@@ -449,6 +483,7 @@ export async function updateProductVisibility(input: {
   intendedActive: boolean;
   visibilityNotes?: string;
 }) {
+  await requireAdmin();
   requireNonEmpty(input.productId, 'Product id');
 
   await prisma.productVisibility.upsert({

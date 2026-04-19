@@ -85,6 +85,83 @@ describe('product lifecycle', () => {
     expect(production.customerVisible).toBe(false);
   });
 
+  it('treats admin preview as admin-visible without customer visibility', () => {
+    const decision = deriveProductVisibilityDecision({
+      lifecycle: createInitialLifecycleState({
+        productId: 'p1',
+        ingestState: 'normalized',
+        reviewState: 'approved',
+        previewState: 'admin_only',
+        publishState: 'unpublished',
+      }),
+      sourceHealth: {
+        productId: 'p1',
+        sourceStatus: 'active',
+        needsRevalidation: false,
+      },
+      externalSignals: {
+        productId: 'p1',
+        reputationState: 'healthy',
+        repeatedComplaintPattern: false,
+        lowRatingRisk: false,
+        recommendation: 'none',
+      },
+      environment: 'development',
+    });
+
+    expect(decision.adminPreviewVisible).toBe(true);
+    expect(decision.customerVisible).toBe(false);
+  });
+
+  it('blocks approving manual seeds without source capture context', () => {
+    const result = applyLifecycleAction({
+      current: createInitialLifecycleState({
+        productId: 'p1',
+        ingestState: 'manual_seeded',
+        reviewState: 'pending',
+      }),
+      action: 'approve_review',
+      changedAt: '2026-04-18T00:00:00.000Z',
+      changedBy: 'tester',
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.reason).toContain('source capture');
+  });
+
+  it('blocks dev preview for manual seeds without source capture context', () => {
+    const result = applyLifecycleAction({
+      current: createInitialLifecycleState({
+        productId: 'p1',
+        ingestState: 'manual_seeded',
+        reviewState: 'approved',
+      }),
+      action: 'enable_dev_preview',
+      changedAt: '2026-04-18T00:00:00.000Z',
+      changedBy: 'tester',
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.reason).toContain('source capture');
+  });
+
+  it('allows dev preview for manual seeds when source capture context is present', () => {
+    const result = applyLifecycleAction({
+      current: createInitialLifecycleState({
+        productId: 'p1',
+        ingestState: 'manual_seeded',
+        reviewState: 'approved',
+      }),
+      action: 'enable_dev_preview',
+      changedAt: '2026-04-18T00:00:00.000Z',
+      changedBy: 'tester',
+      context: { hasSourceCapture: true },
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.nextState?.previewState).toBe('dev_customer');
+  });
+
   it('returns per-row bulk results for mixed valid and invalid transitions', () => {
     const results = applyLifecycleActionBatch({
       items: [

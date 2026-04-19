@@ -54,6 +54,10 @@ export interface ProductVisibilityDecision {
   reasons: string[];
 }
 
+export interface LifecycleTransitionContext {
+  hasSourceCapture?: boolean;
+}
+
 export interface LifecycleTransitionResult {
   valid: boolean;
   nextState?: ProductLifecycleStateRecord;
@@ -165,6 +169,7 @@ export function applyLifecycleAction(input: {
   changedAt: string;
   changedBy: string;
   reason?: string;
+  context?: LifecycleTransitionContext;
 }): LifecycleTransitionResult {
   const next: ProductLifecycleStateRecord = {
     ...input.current,
@@ -191,6 +196,9 @@ export function applyLifecycleAction(input: {
     case 'approve_review': {
       if (input.current.reviewState === 'rejected') {
         return { valid: false, reason: 'Rejected products must be reset before approval.' };
+      }
+      if (input.current.ingestState === 'manual_seeded' && !input.context?.hasSourceCapture) {
+        return { valid: false, reason: 'Manual seed products require source capture before approval.' };
       }
       next.reviewState = 'approved';
       return { valid: true, nextState: next };
@@ -227,6 +235,9 @@ export function applyLifecycleAction(input: {
     case 'enable_dev_preview': {
       if (input.current.reviewState !== 'approved') {
         return { valid: false, reason: 'Dev customer preview requires approved review state.' };
+      }
+      if (input.current.ingestState === 'manual_seeded' && !input.context?.hasSourceCapture) {
+        return { valid: false, reason: 'Manual seed products require source capture before dev customer preview.' };
       }
       if (input.current.publishState === 'withdrawn') {
         return { valid: false, reason: 'Withdrawn products cannot enter dev customer preview.' };
