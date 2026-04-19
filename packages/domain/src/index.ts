@@ -56,5 +56,6 @@ export interface ProductRecord {
   provenance: ProductProvenance;
   recommendationRationale: RecommendationRationale;
   image?: ProductImage;
+  images?: ProductImage[];
   facts: ProductFact[];
 }

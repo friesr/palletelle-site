@@ -102,6 +102,38 @@ function getRawSnapshotString(rawSnapshot: unknown, ...keys: string[]) {
   return undefined;
 }
 
+function getRawSnapshotStringArray(rawSnapshot: unknown, ...keys: string[]) {
+  if (!rawSnapshot || typeof rawSnapshot !== 'object') {
+    return [] as string[];
+  }
+
+  const results: string[] = [];
+
+  for (const key of keys) {
+    const value = (rawSnapshot as Record<string, unknown>)[key];
+
+    if (typeof value === 'string' && value.trim().length > 0) {
+      results.push(value.trim());
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === 'string' && item.trim().length > 0) {
+          results.push(item.trim());
+        } else if (item && typeof item === 'object') {
+          const nested = getRawSnapshotString(item, 'url', 'src', 'image', 'imageUrl', 'mainImage', 'mainImageUrl');
+          if (nested) {
+            results.push(nested);
+          }
+        }
+      }
+    }
+  }
+
+  return [...new Set(results)];
+}
+
 function normalizePriceLabel(value?: string | null) {
   if (!value) {
     return undefined;
@@ -252,24 +284,44 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
   const sourceColor = normalizedData?.sourceColor ?? sourceData?.colorText ?? 'Unknown color';
   const styleOpinion = inferredData?.styleOpinion ?? 'No editorial suggestion recorded.';
   const rawSnapshot = sourceData?.rawSnapshotJson ? JSON.parse(sourceData.rawSnapshotJson) : null;
-  const sourceImageUrl = getRawSnapshotString(rawSnapshot, 'image', 'imageUrl', 'mainImage', 'mainImageUrl');
-  const fixtureImage = sampleProducts.find((item) => item.slug === product.slug)?.image;
+  const sourceImageUrls = getRawSnapshotStringArray(
+    rawSnapshot,
+    'image',
+    'imageUrl',
+    'mainImage',
+    'mainImageUrl',
+    'images',
+    'additionalImages',
+    'alternateImages',
+    'gallery',
+    'media',
+  );
+  const fixtureProduct = sampleProducts.find((item) => item.slug === product.slug);
+  const fixtureImage = fixtureProduct?.image;
+  const fixtureImages = fixtureProduct?.images ?? (fixtureImage ? [fixtureImage] : []);
   const displayName = getDisplayName(product, sourceData);
-  const image = sourceImageUrl
-    ? {
-        src: sourceImageUrl,
-        alt: `${displayName} source image`,
-        caption: sourceData?.sourcePlatform?.startsWith('amazon')
-          ? 'Source listing image captured for development review'
-          : 'Source image captured for development review',
-      }
-    : sourceData?.sourcePlatform?.startsWith('amazon')
-      ? undefined
-      : fixtureImage ?? makeFallbackProductImage(
-          displayName,
-          sourceColor,
-          product.slug,
-        );
+  const sourceImages = sourceImageUrls.map((src, index) => ({
+    src,
+    alt: `${displayName} source image ${index + 1}`,
+    caption: sourceData?.sourcePlatform?.startsWith('amazon')
+      ? 'Source listing image captured for development review'
+      : 'Source image captured for development review',
+  }));
+  const fallbackImage = sourceData?.sourcePlatform?.startsWith('amazon')
+    ? undefined
+    : fixtureImage ?? makeFallbackProductImage(
+        displayName,
+        sourceColor,
+        product.slug,
+      );
+  const images = sourceImages.length > 0
+    ? sourceImages
+    : fixtureImages.length > 0
+      ? fixtureImages
+      : fallbackImage
+        ? [fallbackImage]
+        : [];
+  const image = images[0];
   const priceTracking = assessPriceTrackingHistory(
     product.priceSnapshots
       .filter((snapshot) => !sourceData || snapshot.productSourceDataId === sourceData.id)
@@ -300,6 +352,7 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
     sourcePlatform: sourceData?.sourcePlatform ?? 'amazon',
     sourceIdentifier: sourceData?.sourceIdentifier ?? product.id,
     image,
+    images,
     priceTracking,
     provenance: {
       dataSource:
