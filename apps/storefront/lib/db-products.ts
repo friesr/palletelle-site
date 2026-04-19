@@ -51,6 +51,25 @@ function makeFallbackProductImage(title: string, subtitle: string, seed: string)
   };
 }
 
+function getStorefrontSourcePriority(sourcePlatform?: string | null) {
+  if (sourcePlatform?.startsWith('amazon_manual')) return 0;
+  if (sourcePlatform?.startsWith('amazon')) return 1;
+  return 2;
+}
+
+export function prioritizeStorefrontProducts<T extends { createdAt: Date; sourceData: Array<{ sourcePlatform: string } | null> }>(products: T[]) {
+  return [...products].sort((left, right) => {
+    const leftPriority = getStorefrontSourcePriority(left.sourceData[0]?.sourcePlatform);
+    const rightPriority = getStorefrontSourcePriority(right.sourceData[0]?.sourcePlatform);
+
+    if (leftPriority !== rightPriority) {
+      return leftPriority - rightPriority;
+    }
+
+    return left.createdAt.getTime() - right.createdAt.getTime();
+  });
+}
+
 function mapLifecycleState(product: StorefrontDbProduct): ProductLifecycleStateRecord {
   if (product.lifecycleState) {
     return {
@@ -218,7 +237,7 @@ export async function listStorefrontProducts(): Promise<ProductRecord[]> {
     return sampleProducts;
   }
 
-  const visibleProducts = filterVisibleStorefrontProducts(products);
+  const visibleProducts = prioritizeStorefrontProducts(filterVisibleStorefrontProducts(products));
 
   if (visibleProducts.length === 0) {
     return sampleProducts;

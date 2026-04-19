@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterVisibleStorefrontProducts, getStorefrontVisibilityDecision } from './db-products';
+import { filterVisibleStorefrontProducts, getStorefrontVisibilityDecision, prioritizeStorefrontProducts } from './db-products';
 
 function buildProduct(overrides: Record<string, unknown> = {}) {
   return {
@@ -131,5 +131,58 @@ describe('storefront lifecycle visibility', () => {
 
     expect(decision.customerVisible).toBe(false);
     expect(decision.mode).toBe('dev_preview');
+  });
+
+  it('prioritizes Amazon-seeded products ahead of fixtures', () => {
+    const ordered = prioritizeStorefrontProducts([
+      buildProduct({
+        id: 'fixture-1',
+        slug: 'fixture-1',
+        createdAt: new Date('2026-04-17T00:00:00.000Z'),
+        sourceData: [{
+          id: 'fixture-1-source',
+          productId: 'fixture-1',
+          sourcePlatform: 'fixture',
+          sourceIdentifier: 'fixture-1',
+          canonicalUrl: 'https://example.com/fixture',
+          affiliateUrl: 'https://example.com/fixture?tag=test',
+          title: 'Fixture product',
+          brand: null,
+          category: null,
+          colorText: null,
+          priceText: null,
+          availabilityText: null,
+          ingestMethod: 'fixture_seed',
+          rawSnapshotJson: '{}',
+          fieldMapJson: '{}',
+          retrievedAt: new Date('2026-04-17T00:00:00.000Z'),
+        }],
+      }),
+      buildProduct({
+        id: 'amazon-1',
+        slug: 'amazon-1',
+        createdAt: new Date('2026-04-18T00:00:00.000Z'),
+        sourceData: [{
+          id: 'amazon-1-source',
+          productId: 'amazon-1',
+          sourcePlatform: 'amazon_manual',
+          sourceIdentifier: 'B000000001',
+          canonicalUrl: 'https://example.com/amazon',
+          affiliateUrl: 'https://example.com/amazon?tag=test',
+          title: 'Amazon product',
+          brand: null,
+          category: null,
+          colorText: null,
+          priceText: null,
+          availabilityText: null,
+          ingestMethod: 'manual_seed',
+          rawSnapshotJson: '{}',
+          fieldMapJson: '{}',
+          retrievedAt: new Date('2026-04-18T00:00:00.000Z'),
+        }],
+      }),
+    ]);
+
+    expect(ordered.map((product) => product.id)).toEqual(['amazon-1', 'fixture-1']);
   });
 });
