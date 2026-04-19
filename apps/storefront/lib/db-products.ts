@@ -27,6 +27,11 @@ function parseJsonArray(value?: string | null) {
   return value ? JSON.parse(value) : [];
 }
 
+function getStorefrontRuntimeEnvironment(): 'development' | 'production' {
+  const configured = process.env.ATELIER_STORE_ENV ?? process.env.NEXT_PUBLIC_STORE_ENV ?? process.env.NODE_ENV;
+  return configured === 'production' ? 'production' : 'development';
+}
+
 function makeFallbackProductImage(title: string, subtitle: string, seed: string) {
   const hue = Array.from(seed).reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
   const svg = `
@@ -130,7 +135,7 @@ function mapExternalSignals(product: StorefrontDbProduct): ExternalProductSignal
   };
 }
 
-export function getStorefrontVisibilityDecision(product: StorefrontDbProduct, environment = process.env.NODE_ENV === 'production' ? 'production' as const : 'development' as const) {
+export function getStorefrontVisibilityDecision(product: StorefrontDbProduct, environment = getStorefrontRuntimeEnvironment()) {
   return deriveProductVisibilityDecision({
     lifecycle: mapLifecycleState(product),
     sourceHealth: mapSourceHealth(product),
@@ -139,7 +144,7 @@ export function getStorefrontVisibilityDecision(product: StorefrontDbProduct, en
   });
 }
 
-export function filterVisibleStorefrontProducts(products: StorefrontDbProduct[], environment = process.env.NODE_ENV === 'production' ? 'production' as const : 'development' as const) {
+export function filterVisibleStorefrontProducts(products: StorefrontDbProduct[], environment = getStorefrontRuntimeEnvironment()) {
   return products.filter((product) => getStorefrontVisibilityDecision(product, environment).customerVisible);
 }
 
@@ -221,6 +226,7 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
 }
 
 export async function listStorefrontProducts(): Promise<ProductRecord[]> {
+  const runtimeEnvironment = getStorefrontRuntimeEnvironment();
   const products = await prisma.product.findMany({
     include: {
       sourceData: true,
@@ -241,8 +247,10 @@ export async function listStorefrontProducts(): Promise<ProductRecord[]> {
     return sampleProducts;
   }
 
-  const visibleProducts = prioritizeStorefrontProducts(filterVisibleStorefrontProducts(products));
-  const customerFacingProducts = visibleProducts.filter((product) => !isManualReviewPlaceholder(product));
+  const visibleProducts = prioritizeStorefrontProducts(filterVisibleStorefrontProducts(products, runtimeEnvironment));
+  const customerFacingProducts = runtimeEnvironment === 'production'
+    ? visibleProducts.filter((product) => !isManualReviewPlaceholder(product))
+    : visibleProducts;
 
   if (customerFacingProducts.length === 0) {
     return sampleProducts;
@@ -252,6 +260,7 @@ export async function listStorefrontProducts(): Promise<ProductRecord[]> {
 }
 
 export async function getStorefrontProductBySlug(slug: string): Promise<ProductRecord | null> {
+  const runtimeEnvironment = getStorefrontRuntimeEnvironment();
   const product = await prisma.product.findUnique({
     where: { slug },
     include: {
@@ -272,11 +281,11 @@ export async function getStorefrontProductBySlug(slug: string): Promise<ProductR
     return sampleProducts.find((item) => item.slug === slug) ?? null;
   }
 
-  if (!getStorefrontVisibilityDecision(product).customerVisible) {
+  if (!getStorefrontVisibilityDecision(product, runtimeEnvironment).customerVisible) {
     return null;
   }
 
-  if (isManualReviewPlaceholder(product)) {
+  if (runtimeEnvironment === 'production' && isManualReviewPlaceholder(product)) {
     return null;
   }
 
