@@ -86,6 +86,17 @@ export async function getEditableProductById(id: string): Promise<SourcedProduct
 }
 
 const confidenceLevels = ['low', 'medium', 'high'] as const;
+const sourceStatuses = ['unknown', 'active', 'inactive', 'unavailable', 'changed'] as const;
+
+async function getLatestSourceDataId(productId: string) {
+  const existing = await prisma.productSourceData.findFirst({
+    where: { productId },
+    orderBy: { retrievedAt: 'desc' },
+    select: { id: true },
+  });
+
+  return existing?.id ?? `${productId}-source`;
+}
 
 export async function updateProductNormalizedFields(input: {
   productId: string;
@@ -170,6 +181,99 @@ export async function updateProductInferredFields(input: {
       confidenceImprovement: input.confidenceImprovement,
       missingAttributesJson: JSON.stringify(input.missingAttributes),
       uncertainAttributesJson: JSON.stringify(input.uncertainAttributes),
+    },
+  });
+}
+
+export async function updateProductSourceFields(input: {
+  productId: string;
+  sourcePlatform: string;
+  ingestMethod?: string;
+  sourceIdentifier: string;
+  canonicalUrl?: string;
+  affiliateUrl?: string;
+  imageUrl?: string;
+  title?: string;
+  categoryText?: string;
+  colorText?: string;
+  priceText?: string;
+  availabilityText?: string;
+  summary?: string;
+  sourceNotes?: string;
+}) {
+  requireNonEmpty(input.productId, 'Product id');
+  requireNonEmpty(input.sourcePlatform, 'Source platform');
+  requireNonEmpty(input.sourceIdentifier, 'Source identifier');
+
+  const sourceDataId = await getLatestSourceDataId(input.productId);
+  const rawSnapshot = {
+    image: optionalText(input.imageUrl),
+    summary: optionalText(input.summary),
+    sourceNotes: optionalText(input.sourceNotes),
+  };
+
+  await prisma.productSourceData.upsert({
+    where: { id: sourceDataId },
+    update: {
+      sourcePlatform: input.sourcePlatform,
+      ingestMethod: optionalText(input.ingestMethod),
+      sourceIdentifier: input.sourceIdentifier,
+      canonicalUrl: optionalText(input.canonicalUrl),
+      affiliateUrl: optionalText(input.affiliateUrl),
+      retrievedAt: new Date(),
+      title: optionalText(input.title),
+      categoryText: optionalText(input.categoryText),
+      colorText: optionalText(input.colorText),
+      priceText: optionalText(input.priceText),
+      availabilityText: optionalText(input.availabilityText),
+      rawSnapshotJson: JSON.stringify(rawSnapshot),
+    },
+    create: {
+      id: sourceDataId,
+      productId: input.productId,
+      sourcePlatform: input.sourcePlatform,
+      ingestMethod: optionalText(input.ingestMethod),
+      sourceIdentifier: input.sourceIdentifier,
+      canonicalUrl: optionalText(input.canonicalUrl),
+      affiliateUrl: optionalText(input.affiliateUrl),
+      retrievedAt: new Date(),
+      title: optionalText(input.title),
+      categoryText: optionalText(input.categoryText),
+      colorText: optionalText(input.colorText),
+      priceText: optionalText(input.priceText),
+      availabilityText: optionalText(input.availabilityText),
+      rawSnapshotJson: JSON.stringify(rawSnapshot),
+    },
+  });
+}
+
+export async function updateProductSourceHealthFields(input: {
+  productId: string;
+  sourceStatus: string;
+  sourceCheckResult?: string;
+  revalidationReason?: string;
+  needsRevalidation: boolean;
+}) {
+  requireNonEmpty(input.productId, 'Product id');
+  const sourceStatus = requireEnumValue(input.sourceStatus, sourceStatuses, 'Source status');
+
+  await prisma.productSourceHealth.upsert({
+    where: { productId: input.productId },
+    update: {
+      sourceStatus,
+      lastSourceCheckAt: new Date(),
+      sourceCheckResult: optionalText(input.sourceCheckResult),
+      needsRevalidation: input.needsRevalidation,
+      revalidationReason: optionalText(input.revalidationReason),
+    },
+    create: {
+      id: `${input.productId}-source-health`,
+      productId: input.productId,
+      sourceStatus,
+      lastSourceCheckAt: new Date(),
+      sourceCheckResult: optionalText(input.sourceCheckResult),
+      needsRevalidation: input.needsRevalidation,
+      revalidationReason: optionalText(input.revalidationReason),
     },
   });
 }

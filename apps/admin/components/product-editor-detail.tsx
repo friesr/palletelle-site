@@ -8,7 +8,7 @@ export function ProductEditorDetail({ product }: { product: SourcedProductRecord
         <p style={eyebrowStyle}>Fixture-backed editor scaffold</p>
         <h2 style={{ margin: '8px 0 0', fontSize: 28 }}>{product.normalized.title}</h2>
         <p style={mutedText}>
-          This editor is local-only and non-persistent. It is intended to show what an editable product review flow would expose without implying live writes.
+          This editor writes through guarded admin actions so source capture, normalized fields, and inferred fields can be updated locally without collapsing trust boundaries.
         </p>
       </section>
 
@@ -56,7 +56,7 @@ export function ProductEditorDetail({ product }: { product: SourcedProductRecord
       <section style={cardStyle}>
         <h3 style={sectionTitle}>Editing boundary</h3>
         <p style={mutedText}>
-          Source data remains read-only. Only normalized and inferred fields are editable, and they persist only through guarded service-layer actions.
+          Source capture, normalized fields, and inferred fields are all editable here, but they remain deliberately separated so pasted listing data does not silently become customer-facing truth.
         </p>
       </section>
 

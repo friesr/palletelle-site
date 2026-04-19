@@ -22,6 +22,11 @@ export interface AgentStatusCard {
   lastAction: string;
   timeoutState: string;
   errorState?: string;
+  tokenRiskStatus?: 'stable' | 'watch' | 'exhausted' | 'unknown';
+  tokenUsage24h?: string;
+  tokenUsage7d?: string;
+  tokenUsage30d?: string;
+  tokenTelemetryNote?: string;
 }
 
 export interface DatabaseHealthCard {
@@ -89,6 +94,32 @@ function formatTimestamp(value: string | Date | null | undefined) {
 
 function formatPercent(value: number) {
   return `${value.toFixed(1)}%`;
+}
+
+function buildTokenTelemetry(input: {
+  model: string;
+  status: ServiceStatus;
+  errorState?: string;
+}): Pick<AgentStatusCard, 'tokenRiskStatus' | 'tokenUsage24h' | 'tokenUsage7d' | 'tokenUsage30d' | 'tokenTelemetryNote'> {
+  const exhausted = /out of tokens|insufficient_quota|quota/i.test(input.errorState ?? '');
+
+  if (exhausted) {
+    return {
+      tokenRiskStatus: 'exhausted',
+      tokenUsage24h: 'unavailable',
+      tokenUsage7d: 'unavailable',
+      tokenUsage30d: 'unavailable',
+      tokenTelemetryNote: 'Recent failure suggests token exhaustion. Historical token telemetry is not wired yet.',
+    };
+  }
+
+  return {
+    tokenRiskStatus: input.status === 'running' ? 'unknown' : 'watch',
+    tokenUsage24h: 'unavailable',
+    tokenUsage7d: 'unavailable',
+    tokenUsage30d: 'unavailable',
+    tokenTelemetryNote: `Active model: ${input.model}. Historical token telemetry is not wired yet.`,
+  };
 }
 
 async function runCommand(command: string, args: string[], timeoutMs = 4000): Promise<CommandResult> {
@@ -364,6 +395,11 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
         : `Gateway unit ${orchestratorUnit.activeState}/${orchestratorUnit.subState} (${orchestratorUnit.result}).`,
       timeoutState: orchestratorHealthy ? 'none' : orchestratorProbe.timedOut ? 'timed out' : 'none',
       errorState: orchestratorHealthy ? undefined : orchestratorProbe.timedOut ? 'Gateway status probe timeout.' : `systemd result=${orchestratorUnit.result}${orchestratorUnit.execMainStatus ? `, exit=${orchestratorUnit.execMainStatus}` : ''}`,
+      ...buildTokenTelemetry({
+        model: 'OpenClaw Gateway',
+        status: orchestratorHealthy ? 'running' : orchestratorUnit.activeState === 'active' ? 'degraded' : 'stopped',
+        errorState: orchestratorHealthy ? undefined : orchestratorProbe.timedOut ? 'Gateway status probe timeout.' : `systemd result=${orchestratorUnit.result}${orchestratorUnit.execMainStatus ? `, exit=${orchestratorUnit.execMainStatus}` : ''}`,
+      }),
     },
     {
       name: 'Noah',
@@ -379,6 +415,11 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
         : 'Package manager probe failed.',
       timeoutState: securityProbe.timedOut ? 'timed out' : 'none',
       errorState: securityProbe.ok ? undefined : securityProbe.stderr.trim() || 'Package manager probe timeout.',
+      ...buildTokenTelemetry({
+        model: 'apt',
+        status: securityProbe.ok ? (securityUpdatesPending > 0 ? 'degraded' : 'running') : 'stopped',
+        errorState: securityProbe.ok ? undefined : securityProbe.stderr.trim() || 'Package manager probe timeout.',
+      }),
     },
     {
       name: 'Ada',
@@ -390,6 +431,7 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
       lastAction: summarizeLatestProductAction(latestProduct),
       timeoutState: 'none',
       errorState: latestProduct?.sourceHealth?.revalidationReason ?? undefined,
+      ...buildTokenTelemetry({ model: 'Prisma', status: agentStatusFromProduct(latestProduct), errorState: latestProduct?.sourceHealth?.revalidationReason ?? undefined }),
     },
     {
       name: 'Ruth',
@@ -405,6 +447,13 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
       errorState: latestReviewed?.reviewState && ['hold', 'needs_refresh', 'rejected'].includes(latestReviewed.reviewState.workflowState)
         ? latestReviewed.reviewState.reviewerNotes ?? `Workflow state ${latestReviewed.reviewState.workflowState}.`
         : undefined,
+      ...buildTokenTelemetry({
+        model: 'Prisma',
+        status: reviewStatusFromProduct(latestReviewed),
+        errorState: latestReviewed?.reviewState && ['hold', 'needs_refresh', 'rejected'].includes(latestReviewed.reviewState.workflowState)
+          ? latestReviewed.reviewState.reviewerNotes ?? `Workflow state ${latestReviewed.reviewState.workflowState}.`
+          : undefined,
+      }),
     },
     {
       name: 'Ezra',
@@ -426,6 +475,17 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
       errorState: latestSourceHealth?.sourceHealth?.needsRevalidation
         ? latestSourceHealth.sourceHealth.revalidationReason ?? 'Needs revalidation.'
         : undefined,
+      ...buildTokenTelemetry({
+        model: 'Prisma',
+        status: latestSourceHealth?.sourceHealth?.needsRevalidation || ['inactive', 'unavailable', 'changed'].includes(latestSourceHealth?.sourceHealth?.sourceStatus ?? '')
+          ? 'degraded'
+          : latestSourceActivity
+            ? 'running'
+            : 'stopped',
+        errorState: latestSourceHealth?.sourceHealth?.needsRevalidation
+          ? latestSourceHealth.sourceHealth.revalidationReason ?? 'Needs revalidation.'
+          : undefined,
+      }),
     },
     {
       name: 'Leah',
@@ -437,6 +497,7 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
       lastAction: uiProbe.statusCode ? `GET / -> ${uiProbe.statusCode}${uiProbe.latencyMs !== null ? ` in ${uiProbe.latencyMs}ms` : ''}` : 'Port 3000 probe failed.',
       timeoutState: uiProbe.error?.toLowerCase().includes('timeout') ? 'timed out' : 'none',
       errorState: uiProbe.error ?? undefined,
+      ...buildTokenTelemetry({ model: 'Next.js', status: uiProbe.ok ? 'running' : uiProbe.statusCode ? 'degraded' : 'stopped', errorState: uiProbe.error ?? undefined }),
     },
     {
       name: 'Titus',
@@ -448,6 +509,7 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
       lastAction: adminProbe.statusCode ? `GET / -> ${adminProbe.statusCode}${adminProbe.latencyMs !== null ? ` in ${adminProbe.latencyMs}ms` : ''}` : 'Port 3001 probe failed.',
       timeoutState: adminProbe.error?.toLowerCase().includes('timeout') ? 'timed out' : 'none',
       errorState: adminProbe.error ?? undefined,
+      ...buildTokenTelemetry({ model: 'Next.js', status: adminProbe.ok ? 'running' : adminProbe.statusCode ? 'degraded' : 'stopped', errorState: adminProbe.error ?? undefined }),
     },
     {
       name: 'Mark',
@@ -458,6 +520,7 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
       lastHeartbeat: null,
       lastAction: 'Rostered in the agent contract, with no live runtime probe configured yet.',
       timeoutState: 'none',
+      ...buildTokenTelemetry({ model: 'Rostered agent', status: 'stopped' }),
     },
     database,
   ];
