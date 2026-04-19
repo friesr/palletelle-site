@@ -193,6 +193,7 @@ export async function updateProductSourceFields(input: {
   canonicalUrl?: string;
   affiliateUrl?: string;
   imageUrl?: string;
+  galleryImageUrls?: string[];
   title?: string;
   categoryText?: string;
   colorText?: string;
@@ -206,8 +207,15 @@ export async function updateProductSourceFields(input: {
   requireNonEmpty(input.sourceIdentifier, 'Source identifier');
 
   const sourceDataId = await getLatestSourceDataId(input.productId);
+  const normalizedGalleryImageUrls = Array.from(new Set((input.galleryImageUrls ?? []).map((entry) => entry.trim()).filter(Boolean)));
   const rawSnapshot = {
     image: optionalText(input.imageUrl),
+    imageUrl: optionalText(input.imageUrl),
+    mainImage: optionalText(input.imageUrl),
+    mainImageUrl: optionalText(input.imageUrl),
+    images: normalizedGalleryImageUrls,
+    additionalImages: normalizedGalleryImageUrls,
+    gallery: normalizedGalleryImageUrls,
     summary: optionalText(input.summary),
     sourceNotes: optionalText(input.sourceNotes),
   };

@@ -22,7 +22,22 @@ export function ProductEditForms({ product }: { product: SourcedProductRecord })
           {renderInput('sourceIdentifier', 'Source identifier', product.source.sourceIdentifier)}
           {renderInput('canonicalUrl', 'Canonical URL', product.source.canonicalUrl ?? '')}
           {renderInput('affiliateUrl', 'Affiliate URL', product.source.affiliateUrl ?? '')}
-          {renderInput('imageUrl', 'Image URL', getStringValue(product.source.rawSnapshot?.image))}
+          {renderInput('imageUrl', 'Primary image URL', getStringValue(product.source.rawSnapshot?.image, product.source.rawSnapshot?.imageUrl, product.source.rawSnapshot?.mainImage, product.source.rawSnapshot?.mainImageUrl))}
+          <label style={fieldStyle}>
+            <span>Gallery image URLs (one per line)</span>
+            <textarea
+              name="galleryImageUrls"
+              defaultValue={getStringArrayValue(
+                product.source.rawSnapshot?.images,
+                product.source.rawSnapshot?.additionalImages,
+                product.source.rawSnapshot?.alternateImages,
+                product.source.rawSnapshot?.gallery,
+                product.source.rawSnapshot?.media,
+              ).join('\n')}
+              rows={5}
+              style={textareaStyle}
+            />
+          </label>
           {renderInput('sourceTitle', 'Source title', getStringValue(product.source.rawSnapshot?.title, product.normalized.title))}
           {renderInput('categoryText', 'Source category text', getStringValue(product.source.rawSnapshot?.categoryText, product.normalized.category))}
           {renderInput('colorText', 'Source color text', getStringValue(product.source.rawSnapshot?.colorText, product.normalized.sourceColor))}
@@ -124,6 +139,41 @@ function getStringValue(...values: unknown[]) {
   }
 
   return '';
+}
+
+function getStringArrayValue(...values: unknown[]) {
+  for (const value of values) {
+    if (!value) {
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      const normalized = value
+        .map((entry) => {
+          if (typeof entry === 'string') {
+            return entry.trim();
+          }
+
+          if (entry && typeof entry === 'object') {
+            for (const key of ['url', 'src', 'image', 'imageUrl', 'mainImage', 'mainImageUrl']) {
+              const nested = (entry as Record<string, unknown>)[key];
+              if (typeof nested === 'string' && nested.trim().length > 0) {
+                return nested.trim();
+              }
+            }
+          }
+
+          return '';
+        })
+        .filter(Boolean);
+
+      if (normalized.length > 0) {
+        return normalized;
+      }
+    }
+  }
+
+  return [] as string[];
 }
 
 function renderInput(name: string, label: string, defaultValue: string) {

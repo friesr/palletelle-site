@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterVisibleStorefrontProducts, getStorefrontVisibilityDecision, isManualReviewPlaceholder } from './db-products';
+import { filterVisibleStorefrontProducts, getStorefrontVisibilityDecision, isManualReviewPlaceholder, resolveStorefrontRuntimeEnvironment } from './db-products';
 
 function buildProduct(overrides: Record<string, unknown> = {}) {
   return {
@@ -152,5 +152,58 @@ describe('storefront lifecycle visibility', () => {
         }),
       ),
     ).toBe(true);
+  });
+
+  it('forces private LAN hosts into development mode', () => {
+    expect(resolveStorefrontRuntimeEnvironment({ host: '192.168.1.115:3000', publicStoreFlag: 'true', nodeEnv: 'production' })).toBe('development');
+    expect(resolveStorefrontRuntimeEnvironment({ host: 'atelier.local', publicStoreFlag: 'true', nodeEnv: 'production' })).toBe('development');
+  });
+
+  it('still honors an explicit production config on public hosts', () => {
+    expect(resolveStorefrontRuntimeEnvironment({ host: 'store.atelier.com', configured: 'production', nodeEnv: 'production' })).toBe('production');
+  });
+
+  it('extracts source gallery images from raw snapshot json for storefront use', async () => {
+    const { getStorefrontProductBySlug } = await import('./db-products');
+    const { prisma } = await import('@/lib/db');
+
+    const originalFindUnique = prisma.product.findUnique;
+    prisma.product.findUnique = (async () => buildProduct({
+      slug: 'gallery-product',
+      sourceData: [{
+        id: 'gallery-source',
+        productId: 'p1',
+        sourcePlatform: 'amazon_manual',
+        sourceIdentifier: 'ASIN123',
+        canonicalUrl: 'https://example.com',
+        affiliateUrl: 'https://example.com?tag=test',
+        title: 'Gallery product',
+        categoryText: null,
+        colorText: null,
+        priceText: null,
+        availabilityText: null,
+        ingestMethod: 'manual_capture',
+        rawSnapshotJson: JSON.stringify({
+          image: 'https://images.example.com/main.jpg',
+          images: [
+            'https://images.example.com/main.jpg',
+            'https://images.example.com/detail-2.jpg',
+          ],
+        }),
+        sourceFieldMapJson: '{}',
+        retrievedAt: new Date('2026-04-18T00:00:00.000Z'),
+      }],
+    })) as any;
+
+    try {
+      const product = await getStorefrontProductBySlug('gallery-product');
+      expect(product?.image?.src).toBe('https://images.example.com/main.jpg');
+      expect(product?.images?.map((image) => image.src)).toEqual([
+        'https://images.example.com/main.jpg',
+        'https://images.example.com/detail-2.jpg',
+      ]);
+    } finally {
+      prisma.product.findUnique = originalFindUnique;
+    }
   });
 });

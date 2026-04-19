@@ -15,6 +15,13 @@ function parseList(value: string) {
     .filter(Boolean);
 }
 
+function parseLines(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
 export async function updateNormalizedProductAction(formData: FormData) {
   await requireAdmin();
   const productId = getTrimmedString(formData, 'productId');
@@ -72,6 +79,7 @@ export async function updateSourceProductAction(formData: FormData) {
     canonicalUrl: getTrimmedString(formData, 'canonicalUrl') || undefined,
     affiliateUrl: getTrimmedString(formData, 'affiliateUrl') || undefined,
     imageUrl: getTrimmedString(formData, 'imageUrl') || undefined,
+    galleryImageUrls: parseLines(getTrimmedString(formData, 'galleryImageUrls')),
     title: getTrimmedString(formData, 'sourceTitle') || undefined,
     categoryText: getTrimmedString(formData, 'categoryText') || undefined,
     colorText: getTrimmedString(formData, 'colorText') || undefined,
