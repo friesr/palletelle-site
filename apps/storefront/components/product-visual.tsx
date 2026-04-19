@@ -31,8 +31,9 @@ export function ProductVisual({
         ) : (
           <div className="flex h-full items-end bg-mist p-5">
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.2em] text-black/45">Fixture image unavailable</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-black/45">Source image not captured yet</p>
               <p className="max-w-xs text-sm leading-6 text-black/65">{product.name}</p>
+              <p className="max-w-xs text-xs leading-5 text-black/50">This listing can still be opened at the source while image enrichment is pending.</p>
             </div>
           </div>
         )}

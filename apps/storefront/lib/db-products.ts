@@ -87,6 +87,45 @@ function getStorefrontRuntimeEnvironment(): 'development' | 'production' {
   });
 }
 
+function getRawSnapshotString(rawSnapshot: unknown, ...keys: string[]) {
+  if (!rawSnapshot || typeof rawSnapshot !== 'object') {
+    return undefined;
+  }
+
+  for (const key of keys) {
+    const value = (rawSnapshot as Record<string, unknown>)[key];
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+}
+
+function normalizePriceLabel(value?: string | null) {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.replace(/^\$\$+/, '$');
+}
+
+function getDisplayName(product: StorefrontDbProduct, sourceData: StorefrontDbProduct['sourceData'][number] | null) {
+  const normalizedTitle = product.normalizedData?.title?.trim();
+  const sourceTitle = sourceData?.title?.trim() ?? getRawSnapshotString(sourceData?.rawSnapshotJson ? JSON.parse(sourceData.rawSnapshotJson) : null, 'title', 'name', 'productTitle');
+
+  if (normalizedTitle && !/^Manual review required \(.+\)$/i.test(normalizedTitle)) {
+    return normalizedTitle;
+  }
+
+  if (sourceTitle) {
+    return sourceTitle;
+  }
+
+  return normalizedTitle ?? sourceData?.sourceIdentifier ?? product.slug;
+}
+
 function makeFallbackProductImage(title: string, subtitle: string, seed: string) {
   const hue = Array.from(seed).reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
   const svg = `
@@ -210,14 +249,27 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
   const lifecycle = mapLifecycleState(product);
   const visibilityDecision = getStorefrontVisibilityDecision(product);
   const category = normalizedData?.category ?? 'Unspecified';
-  const sourceColor = normalizedData?.sourceColor ?? 'Unknown color';
+  const sourceColor = normalizedData?.sourceColor ?? sourceData?.colorText ?? 'Unknown color';
   const styleOpinion = inferredData?.styleOpinion ?? 'No editorial suggestion recorded.';
+  const rawSnapshot = sourceData?.rawSnapshotJson ? JSON.parse(sourceData.rawSnapshotJson) : null;
+  const sourceImageUrl = getRawSnapshotString(rawSnapshot, 'image', 'imageUrl', 'mainImage', 'mainImageUrl');
   const fixtureImage = sampleProducts.find((item) => item.slug === product.slug)?.image;
-  const image = fixtureImage ?? makeFallbackProductImage(
-    normalizedData?.title ?? sourceData?.title ?? product.slug,
-    normalizedData?.sourceColor ?? sourceData?.colorText ?? 'Approved seed product',
-    product.slug,
-  );
+  const displayName = getDisplayName(product, sourceData);
+  const image = sourceImageUrl
+    ? {
+        src: sourceImageUrl,
+        alt: `${displayName} source image`,
+        caption: sourceData?.sourcePlatform?.startsWith('amazon')
+          ? 'Source listing image captured for development review'
+          : 'Source image captured for development review',
+      }
+    : sourceData?.sourcePlatform?.startsWith('amazon')
+      ? undefined
+      : fixtureImage ?? makeFallbackProductImage(
+          displayName,
+          sourceColor,
+          product.slug,
+        );
   const priceTracking = assessPriceTrackingHistory(
     product.priceSnapshots
       .filter((snapshot) => !sourceData || snapshot.productSourceDataId === sourceData.id)
@@ -233,13 +285,15 @@ function mapDbProductToStorefrontRecord(product: StorefrontDbProduct): ProductRe
   return {
     id: product.id,
     slug: product.slug,
-    name: normalizedData?.title ?? sourceData?.title ?? product.slug,
-    brand: normalizedData?.brand ?? 'Unknown brand',
-    priceLabel: priceTracking.currentPriceText ?? 'Price not yet observed',
-    colorLabel: normalizedData?.sourceColor ?? sourceData?.colorText ?? 'Color pending review',
+    name: displayName,
+    brand: normalizedData?.brand ?? getRawSnapshotString(rawSnapshot, 'brand') ?? 'Unknown brand',
+    priceLabel: normalizePriceLabel(priceTracking.currentPriceText) ?? normalizePriceLabel(normalizedData?.priceText) ?? 'Price not yet observed',
+    colorLabel: sourceColor,
     summary:
       normalizedData?.summary ??
-      `Lifecycle state ${lifecycle.ingestState} / ${lifecycle.reviewState} / ${lifecycle.previewState} / ${lifecycle.publishState}.`,
+      (sourceData?.sourcePlatform?.startsWith('amazon')
+        ? 'Amazon-sourced development preview. Core source links are present, but catalog enrichment is still in progress.'
+        : `Lifecycle state ${lifecycle.ingestState} / ${lifecycle.reviewState} / ${lifecycle.previewState} / ${lifecycle.publishState}.`),
     confidence: (inferredData?.dataConfidence ?? 'low') as 'low' | 'medium' | 'high',
     buyUrl: sourceData?.affiliateUrl ?? sourceData?.canonicalUrl ?? undefined,
     canonicalUrl: sourceData?.canonicalUrl ?? undefined,
