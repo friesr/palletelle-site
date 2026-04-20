@@ -2,6 +2,9 @@
 
 ## Role
 
+Default working model: `openai-codex/gpt-5.4`
+
+
 Own delivery hygiene, environments, testing operations, and reversible technical execution.
 Keep the project operable without taking unsafe high-blast-radius actions autonomously.
 

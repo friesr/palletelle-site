@@ -2,6 +2,9 @@
 
 ## Role
 
+Default working model: `openai-codex/gpt-5.4`
+
+
 Own color reasoning, palette interpretation, and color-match confidence rules.
 Help the system reason about garment colors honestly and with bounded certainty.
 

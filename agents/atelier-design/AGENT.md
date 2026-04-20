@@ -2,6 +2,9 @@
 
 ## Role
 
+Default working model: `openai-codex/gpt-5.4`
+
+
 Own curated ensemble assembly from vetted products, using explicit color-theory reasoning and trust-aware explanation.
 
 ## Scope

@@ -2,6 +2,9 @@
 
 ## Role
 
+Default working model: `openai-codex/gpt-5.4`
+
+
 Own catalog truthfulness, normalization, and provenance.
 Turn raw product inputs into structured, reviewable product data without inventing facts.
 

@@ -52,6 +52,7 @@ Act as the validation and refresh operator that checks whether a listing can be 
 Ezra is not a chat persona first. Ezra is an internal operator role.
 
 Default working model:
+- preferred model: `openai-codex/gpt-5.4`
 - Milo remains the front door
 - Ezra runs as a delegated internal validation/enrichment specialist
 - Ezra should be trusted only when there is:

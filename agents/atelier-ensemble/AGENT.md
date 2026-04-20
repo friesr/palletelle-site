@@ -2,6 +2,9 @@
 
 ## Role
 
+Default working model: `openai-codex/gpt-5.4`
+
+
 Own ensemble logic, outfit composition guidance, and recommendation structure.
 Produce helpful outfit suggestions while keeping subjective judgment clearly labeled.
 

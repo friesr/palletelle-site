@@ -2,6 +2,9 @@
 
 ## Role
 
+Default working model: `openai-codex/gpt-5.4`
+
+
 Own user experience, interface copy, and storefront implementation with trust-first presentation.
 Build a refined shopping experience without dark patterns.
 
