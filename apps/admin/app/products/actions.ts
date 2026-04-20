@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth/session';
+import { runEzraValidation } from '@/lib/services/ezra-service';
 import { updateProductInferredFields, updateProductNormalizedFields, updateProductSourceFields, updateProductSourceHealthFields } from '@/lib/services/product-service';
 
 function getTrimmedString(formData: FormData, key: string) {
@@ -106,6 +107,18 @@ export async function updateSourceHealthAction(formData: FormData) {
     revalidationReason: getTrimmedString(formData, 'revalidationReason') || undefined,
     needsRevalidation: getTrimmedString(formData, 'needsRevalidation') === 'true',
   });
+
+  revalidatePath('/products');
+  revalidatePath(`/products/${productId}`);
+  revalidatePath(`/review/${productId}`);
+  revalidatePath('/browse');
+}
+
+export async function runEzraValidationAction(formData: FormData) {
+  await requireAdmin();
+  const productId = getTrimmedString(formData, 'productId');
+
+  await runEzraValidation(productId);
 
   revalidatePath('/products');
   revalidatePath(`/products/${productId}`);

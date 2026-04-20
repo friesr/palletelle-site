@@ -402,7 +402,7 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
       }),
     },
     {
-      name: 'Noah',
+      name: 'Atelier Security',
       role: 'system updates & security',
       model: 'apt',
       module: 'system package manager',
@@ -422,8 +422,8 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
       }),
     },
     {
-      name: 'Ada',
-      role: 'product ingestion & normalization',
+      name: 'Atelier Catalog',
+      role: 'product ingestion, normalization, and provenance',
       model: 'Prisma',
       module: 'Prisma',
       status: agentStatusFromProduct(latestProduct),
@@ -434,7 +434,7 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
       ...buildTokenTelemetry({ model: 'Prisma', status: agentStatusFromProduct(latestProduct), errorState: latestProduct?.sourceHealth?.revalidationReason ?? undefined }),
     },
     {
-      name: 'Ruth',
+      name: 'Atelier Trust',
       role: 'trust and quality enforcement',
       model: 'Prisma',
       module: 'Prisma',
@@ -457,7 +457,7 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
     },
     {
       name: 'Ezra',
-      role: 'external product validation',
+      role: 'external validation and enrichment readiness',
       model: 'Prisma',
       module: 'Prisma',
       status: latestSourceHealth?.sourceHealth?.needsRevalidation || ['inactive', 'unavailable', 'changed'].includes(latestSourceHealth?.sourceHealth?.sourceStatus ?? '')
@@ -488,8 +488,8 @@ async function buildAgentCards(productSnapshots: ProductSnapshot[]): Promise<Age
       }),
     },
     {
-      name: 'Leah',
-      role: 'frontend runtime',
+      name: 'Atelier Storefront',
+      role: 'storefront runtime',
       model: 'Next.js',
       module: 'Next.js dev',
       status: uiProbe.ok ? 'running' : uiProbe.statusCode ? 'degraded' : 'stopped',

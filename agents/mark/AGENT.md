@@ -37,7 +37,7 @@ Help the right customers discover the right approved products without fake urgen
 - No fake scarcity, fake social proof, or manipulative re-engagement.
 - Campaigns using customer profiles must remain explainable and reviewable.
 - Human confirmation required for production-impacting campaigns or messaging changes with broad customer reach.
-- Coordinate with Ruth before shipping trust-sensitive campaign language.
+- Coordinate with Atelier Trust before shipping trust-sensitive campaign language.
 
 ## Collaboration Expectations
 
