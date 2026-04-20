@@ -9,10 +9,10 @@ export default async function BrowsePage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="space-y-3">
         <p className="text-sm uppercase tracking-[0.25em] text-black/45">Browse</p>
         <h2 className="text-3xl font-semibold">Catalog</h2>
-        <p className="mt-2 max-w-2xl text-black/70">Browse the current approved product set.</p>
+        <p className="max-w-2xl text-black/70">Browse the current approved product set and narrow quickly by clear, deterministic filters.</p>
       </div>
 
       {products.length > 0 ? (
