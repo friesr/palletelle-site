@@ -6,13 +6,15 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start -p 3001",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@atelier/domain": "workspace:*",
     "bcryptjs": "^3.0.3",
     "next": "15.3.0",
     "next-auth": "5.0.0-beta.31",
+    "nodemailer": "^7.0.7",
     "playwright": "^1.59.1",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -20,6 +22,7 @@
   },
   "devDependencies": {
     "@types/node": "22.15.3",
+    "@types/nodemailer": "^7.0.2",
     "@types/react": "19.0.12",
     "@types/react-dom": "19.0.5",
     "typescript": "5.8.3",

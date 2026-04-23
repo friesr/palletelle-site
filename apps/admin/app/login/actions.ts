@@ -4,14 +4,14 @@ import { AuthError } from 'next-auth';
 import { signIn } from '@/auth';
 
 export async function loginAction(_prevState: { error?: string } | undefined, formData: FormData) {
-  const login = formData.get('login')?.toString() ?? '';
+  const email = formData.get('email')?.toString() ?? '';
   const password = formData.get('password')?.toString() ?? '';
 
   try {
     await signIn('credentials', {
-      login,
+      email,
       password,
-      redirectTo: '/',
+      redirectTo: '/bootstrap-security',
     });
 
     return {};
@@ -19,7 +19,7 @@ export async function loginAction(_prevState: { error?: string } | undefined, fo
     if (error instanceof AuthError) {
       switch (error.type) {
         case 'CredentialsSignin':
-          return { error: 'Invalid admin credentials.' };
+          return { error: 'Invalid bootstrap credentials.' };
         default:
           return { error: 'Unable to sign in right now.' };
       }
