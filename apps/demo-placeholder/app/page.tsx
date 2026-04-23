@@ -8,7 +8,7 @@ export default function Page() {
           Palletelle is building a modest, refined style experience around real products, thoughtful curation, and better outfit guidance.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 28 }}>
-          <a href="mailto:friesr@yahoo.com?subject=Palletelle%20early%20interest" style={{ textDecoration: 'none', padding: '14px 18px', borderRadius: 999, background: '#171412', color: '#fff', fontWeight: 700 }}>Request early access</a>
+          <a href="mailto:info@palletelle.com?subject=Palletelle%20early%20interest" style={{ textDecoration: 'none', padding: '14px 18px', borderRadius: 999, background: '#171412', color: '#fff', fontWeight: 700 }}>Request early access</a>
           <span style={{ padding: '14px 18px', borderRadius: 999, border: '1px solid rgba(23,20,18,0.12)', color: 'rgba(23,20,18,0.72)' }}>Public launch in preparation</span>
         </div>
         <div style={{ marginTop: 36, display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
