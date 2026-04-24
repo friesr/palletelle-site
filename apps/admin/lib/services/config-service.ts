@@ -9,6 +9,25 @@ export async function getAffiliateConfig(): Promise<AffiliateConnectionConfig> {
   });
 
   if (!config) {
+    if (process.env.AFFILIATE_CONFIG_OPTIONAL === 'true') {
+      return {
+        id: 'affiliate-config-optional-fallback',
+        storeName: 'Palletelle',
+        affiliatePlatform: 'amazon',
+        associateTag: undefined,
+        apiStatus: 'placeholder_only',
+        connectionStatus: 'not_configured',
+        credentialsState: 'placeholder_local_only',
+        refreshPolicy: {
+          priceThresholdHours: 24,
+          availabilityThresholdHours: 12,
+          note: 'Temporary fallback config enabled by AFFILIATE_CONFIG_OPTIONAL=true.',
+        },
+        lastReviewedAt: undefined,
+        notes: 'Temporary fallback affiliate config for admin boot recovery.',
+      };
+    }
+
     throw new Error('Affiliate config record not found in local DB seed.');
   }
 

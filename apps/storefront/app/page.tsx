@@ -1,4 +1,6 @@
 import { StorefrontHomeShell } from '@/components/storefront-home-shell';
+
+const storefrontBuildMarker = '2026-04-24T04:10Z';
 import { listStorefrontProducts } from '@/lib/db-products';
 
 export const dynamic = 'force-dynamic';
