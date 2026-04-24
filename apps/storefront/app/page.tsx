@@ -1,6 +1,6 @@
 import { StorefrontHomeShell } from '@/components/storefront-home-shell';
 
-const storefrontBuildMarker = '2026-04-24T04:10Z';
+const storefrontBuildMarker = '3579c25-2026-04-24T22:52Z';
 import { listStorefrontProducts } from '@/lib/db-products';
 
 export const dynamic = 'force-dynamic';
@@ -24,5 +24,5 @@ export default async function HomePage() {
     );
   }
 
-  return <StorefrontHomeShell products={products} />;
+  return <><div data-build-marker={storefrontBuildMarker} style={{ display: 'none' }}>{storefrontBuildMarker}</div><StorefrontHomeShell products={products} /></>;
 }
