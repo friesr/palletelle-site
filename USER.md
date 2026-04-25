@@ -2,12 +2,13 @@
 
 _Learn about the person you're helping. Update this as you go._
 
-- **Name:**
-- **What to call them:**
+- **Name:** Rod
+- **What to call them:** Rod
 - **Pronouns:** _(optional)_
-- **Timezone:**
+- **Timezone:** UTC
 - **Notes:**
   - Amazon store ID: `palletelle-20`
+  - Hank is the main OpenClaw agent/front desk identity.
 
 ## Context
 

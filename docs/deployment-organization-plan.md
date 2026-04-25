@@ -42,7 +42,7 @@ Purpose: discover, validate, enrich, and organize trustworthy products for launc
 - generate internal-only descriptive/supporting content
 - clearly separate verified facts, derived structured data, and internally generated content
 
-#### Ensemble Design Agent, Color Season and Wardrobe Grouping Lead
+#### Iris, Color Season and Wardrobe Grouping Lead
 - study and apply the color season framework
 - group vetted products into coherent wardrobes/ensembles
 - produce subjective style/grouping intelligence for the site
@@ -53,7 +53,7 @@ Purpose: discover, validate, enrich, and organize trustworthy products for launc
 1. Ada finds and stages products.
 2. Ruth filters/removes/flags based on trust and quality.
 3. Ezra validates, enriches, and prepares internal generated content.
-4. Ensemble Design Agent creates color-season groupings and wardrobe logic.
+4. Iris creates color-season groupings and wardrobe logic.
 
 ### 2. Platform and Delivery Unit
 Purpose: build, ship, and operate the application safely.
@@ -100,7 +100,7 @@ The minimum production-ready operating spine is:
 - Ada
 - Ruth
 - Ezra
-- Ensemble Design Agent
+- Iris
 - Leah
 - Titus
 - Isaac
@@ -109,7 +109,7 @@ The minimum production-ready operating spine is:
 
 Before promoting dev toward staging, the system should prove:
 - `main` owns orchestration and approval flow cleanly
-- product pipeline works end-to-end: Ada -> Ruth -> Ezra -> Ensemble
+- product pipeline works end-to-end: Ada -> Ruth -> Ezra -> Iris
 - Leah/Titus/Isaac can move vetted data into trustworthy site/admin flows
 - Noah signs off on deployment posture and exposure risk
 - data/change/rollback expectations are documented
@@ -123,7 +123,7 @@ Before promoting dev toward staging, the system should prove:
    - Ada
    - Ruth
    - Ezra
-   - Ensemble Design Agent
+   - Iris
 3. Stand up Platform and Delivery:
    - Titus
    - Isaac

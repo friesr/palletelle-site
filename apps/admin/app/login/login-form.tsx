@@ -11,14 +11,14 @@ export function LoginForm() {
   return (
     <form action={formAction} style={{ display: 'grid', gap: 16 }}>
       <label style={fieldStyle}>
-        <span>Email or username</span>
-        <input name="login" type="text" autoComplete="username" required style={inputStyle} />
+        <span>Named admin email</span>
+        <input name="email" type="email" autoComplete="username webauthn" required style={inputStyle} />
       </label>
       <label style={fieldStyle}>
-        <span>Password</span>
+        <span>Bootstrap password</span>
         <input name="password" type="password" autoComplete="current-password" required style={inputStyle} />
       </label>
-      {state.error ? (
+      {state?.error ? (
         <p style={{ margin: 0, color: '#8A3B34', fontSize: 14 }}>{state.error}</p>
       ) : null}
       <button type="submit" disabled={pending} style={buttonStyle}>

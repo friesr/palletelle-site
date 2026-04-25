@@ -7,10 +7,11 @@ Document how Palletelle admin authentication works, how the seeded admin user is
 ## 2. What is known
 
 - The admin surface lives in `apps/admin/`.
-- Admin auth uses Auth.js with a credentials provider.
-- Current scope is one seeded admin account.
+- Admin auth uses Auth.js with a bootstrap credentials provider while passkey-first enforcement is being rolled out.
+- Current scope is one named admin account identified by email.
 - Passwords are not stored in plaintext.
 - Admin sessions are required for admin UI and server-side actions.
+- Full admin route access now stays blocked until passkey plus MFA state is present.
 
 ## 3. What is inferred
 
@@ -47,18 +48,19 @@ Use this setup for the first protected admin release, then harden it before any 
 Palletelle admin currently uses:
 
 - **Auth.js / NextAuth**
-- **Credentials provider**
+- **Bootstrap credentials provider for initial setup only**
 - **JWT session strategy**
-- **bcrypt password verification**
+- **bcrypt password verification for temporary bootstrap login**
+- **passkey-first route gating for full admin access**
 
 Login flow:
 
 1. The admin visits `/login`.
-2. They submit `login` and `password`.
-3. Auth.js checks the submitted login against the seeded admin login from environment variables.
-4. The submitted password is compared against `ADMIN_PASSWORD_HASH` using bcrypt.
-5. On success, Auth.js creates a signed session token.
-6. The session includes `role = admin`.
+2. They submit their named admin email and bootstrap password.
+3. Auth.js checks the submitted email against the configured admin email from environment variables.
+4. The submitted password is compared against `ADMIN_BOOTSTRAP_PASSWORD_HASH` using bcrypt.
+5. On success, Auth.js creates a signed session token with a `securityState`.
+6. If passkey or MFA setup is incomplete, the admin is confined to `/bootstrap-security` until the database reflects a registered passkey and verified MFA enrollment.
 
 Logout flow:
 
@@ -72,14 +74,15 @@ Required environment variables:
 
 - `AUTH_SECRET`
 - `AUTH_URL` (recommended for local/admin app URL)
-- `ADMIN_LOGIN`
-- `ADMIN_PASSWORD_HASH`
+- `ADMIN_EMAIL`
+- `ADMIN_NAME`
+- `ADMIN_BOOTSTRAP_PASSWORD_HASH`
 
 ### Where user records live
 
-For now, the single admin user record is synthesized at runtime from environment variables in:
+For now, the named bootstrap admin identity is synthesized from environment variables and checked against database-backed security state in:
 
-- `apps/admin/lib/auth/seeded-admin.ts`
+- `apps/admin/lib/auth/admin-access.ts`
 
 This means:
 
@@ -89,9 +92,8 @@ This means:
 
 ### How to seed or update admin credentials
 
-1. Choose the admin login identifier, for example:
+1. Choose the named admin email identifier, for example:
    - `admin@example.com`
-   - or a username like `palletelle-admin`
 
 2. Generate a bcrypt hash for the password.
 
@@ -113,8 +115,9 @@ node -e "require('bcryptjs').hash(process.argv[1], 12).then(v => console.log(v))
 ```dotenv
 AUTH_SECRET=replace-with-a-long-random-secret
 AUTH_URL=http://localhost:3001
-ADMIN_LOGIN=admin@example.com
-ADMIN_PASSWORD_HASH=$2b$12$...
+ADMIN_EMAIL=admin@example.com
+ADMIN_NAME=Palletelle Admin
+ADMIN_BOOTSTRAP_PASSWORD_HASH=$2b$12$...
 ```
 
 4. Restart the admin dev server.
@@ -127,6 +130,7 @@ Protected pages currently include:
 
 - `/`
 - `/review/[id]`
+- every other admin route except `/login`, `/bootstrap-security`, and `/api/auth/*`
 
 Public pages:
 
@@ -146,6 +150,8 @@ Protection is enforced in multiple layers:
 
 3. **Role enforcement**
    - only `role = admin` sessions pass authorization
+- only `securityState = active` sessions can reach normal admin routes
+- bootstrap sessions are redirected to `/bootstrap-security`
 
 ### Route handlers and admin actions
 
@@ -168,7 +174,8 @@ Before public or internet-exposed use, add at least:
 - HTTPS-only deployment
 - secret rotation process for `AUTH_SECRET`
 - stronger role model if non-admin staff users are introduced
-- optional MFA for admins
+- passkey registration ceremony and assertion flow
+- MFA verification ceremony and challenge handling
 - optional password reset flow backed by verified email
 
 ## Notes on scope

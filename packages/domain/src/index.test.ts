@@ -33,5 +33,6 @@ describe('domain types', () => {
 
     expect(product.facts[0].kind).toBe('fact');
     expect(product.facts[1].kind).toBe('inference');
+    expect(product.provenance.missingAttributes).toContain('inventory');
   });
 });

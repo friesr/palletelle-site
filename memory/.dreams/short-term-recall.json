@@ -1,0 +1,338 @@
+{
+  "version": 1,
+  "updatedAt": "2026-04-19T04:13:53.786Z",
+  "entries": {
+    "memory:memory/2026-04-18.md:5:10": {
+      "key": "memory:memory/2026-04-18.md:5:10",
+      "path": "memory/2026-04-18.md",
+      "startLine": 5,
+      "endLine": 10,
+      "source": "memory",
+      "snippet": "- Defined Palletelle sourcing and ingestion model for Amazon affiliate listings in docs/sourcing-model.md with hybrid discovery, raw->normalized->inferred->staged pipeline, provenance tracking, human-reviewed storefront approval, and explicit truth/inference separation. - Hardened sourcing enforcement defaults: price freshness threshold 24h, availability freshness threshold 12h, stale price and stale availability hidden from storefront, explicit source attribution and last-updated support, no automatic publication. - Aligned sourcing enforcement into agent/admin docs: atelier-catalog must enforce freshness, stale suppression, refusal on rule violations, no direct storefront publication; admi",
+      "recallCount": 5,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1.7023261368274687,
+      "maxScore": 0.4225026398897171,
+      "firstRecalledAt": "2026-04-18T02:28:41.873Z",
+      "lastRecalledAt": "2026-04-18T18:11:33.642Z",
+      "queryHashes": [
+        "70d1a99f8702",
+        "db66008947ed",
+        "a913e27d1840",
+        "f292c23f69c3",
+        "9cc6ae036916"
+      ],
+      "recallDays": [
+        "2026-04-18"
+      ],
+      "conceptTags": [
+        "docs/sourcing-model.md",
+        "human-reviewed",
+        "truth/inference",
+        "last-updated",
+        "agent/admin",
+        "atelier-catalog",
+        "defined",
+        "palletelle"
+      ]
+    },
+    "memory:memory/2026-04-18.md:1:6": {
+      "key": "memory:memory/2026-04-18.md:1:6",
+      "path": "memory/2026-04-18.md",
+      "startLine": 1,
+      "endLine": 6,
+      "source": "memory",
+      "snippet": "- Set up Palletelle workspace governance and six sub-agent contracts: atelier-catalog, atelier-palette, atelier-ensemble, atelier-storefront, atelier-ops, atelier-trust. - Established trust-first docs for frontend delivery, deployment policy, approval gates, rollback expectations, environments, and frontend architecture. - Scaffolded and validated a fixture-backed Next.js storefront shell with domain and trust packages, browse/product pages, provenance/confidence/rationale UI, deterministic browse filters, low-confidence handling, and ensemble explanation surfaces. - Rebranded the project from Atelier to Palletelle in active storefront work and added an initial local logo mark; documented fu",
+      "recallCount": 5,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1.6985147595405579,
+      "maxScore": 0.40103588104248045,
+      "firstRecalledAt": "2026-04-18T02:28:41.873Z",
+      "lastRecalledAt": "2026-04-18T18:11:33.642Z",
+      "queryHashes": [
+        "70d1a99f8702",
+        "db66008947ed",
+        "a913e27d1840",
+        "f292c23f69c3",
+        "9cc6ae036916"
+      ],
+      "recallDays": [
+        "2026-04-18"
+      ],
+      "conceptTags": [
+        "sub-agent",
+        "atelier-catalog",
+        "atelier-palette",
+        "atelier-ensemble",
+        "atelier-storefront",
+        "atelier-ops",
+        "atelier-trust",
+        "trust-first"
+      ]
+    },
+    "memory:memory/2026-04-18.md:9:14": {
+      "key": "memory:memory/2026-04-18.md:9:14",
+      "path": "memory/2026-04-18.md",
+      "startLine": 9,
+      "endLine": 14,
+      "source": "memory",
+      "snippet": "- Set up Palletelle workspace governance and six sub-agent contracts: atelier-catalog, atelier-palette, atelier-ensemble, atelier-storefront, atelier-ops, atelier-trust. - Established trust-first docs for frontend delivery, deployment policy, approval gates, rollback expectations, environments, and frontend architecture. - Scaffolded and validated a fixture-backed Next.js storefront shell with domain and trust packages, browse/product pages, provenance/confidence/rationale UI, deterministic browse filters, low-confidence handling, and ensemble explanation surfaces. - Rebranded the project from Atelier to Palletelle in active storefront work and added an initial local logo mark; documented fu",
+      "recallCount": 5,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1.6985147595405579,
+      "maxScore": 0.40103588104248045,
+      "firstRecalledAt": "2026-04-18T02:28:41.873Z",
+      "lastRecalledAt": "2026-04-18T18:11:33.642Z",
+      "queryHashes": [
+        "70d1a99f8702",
+        "db66008947ed",
+        "a913e27d1840",
+        "f292c23f69c3",
+        "9cc6ae036916"
+      ],
+      "recallDays": [
+        "2026-04-18"
+      ],
+      "conceptTags": [
+        "sub-agent",
+        "atelier-catalog",
+        "atelier-palette",
+        "atelier-ensemble",
+        "atelier-storefront",
+        "atelier-ops",
+        "atelier-trust",
+        "trust-first"
+      ]
+    },
+    "memory:memory/2026-04-18.md:13:17": {
+      "key": "memory:memory/2026-04-18.md:13:17",
+      "path": "memory/2026-04-18.md",
+      "startLine": 13,
+      "endLine": 17,
+      "source": "memory",
+      "snippet": "- Defined Palletelle sourcing and ingestion model for Amazon affiliate listings in docs/sourcing-model.md with hybrid discovery, raw->normalized->inferred->staged pipeline, provenance tracking, human-reviewed storefront approval, and explicit truth/inference separation. - Hardened sourcing enforcement defaults: price freshness threshold 24h, availability freshness threshold 12h, stale price and stale availability hidden from storefront, explicit source attribution and last-updated support, no automatic publication. - Aligned sourcing enforcement into agent/admin docs: atelier-catalog must enforce freshness, stale suppression, refusal on rule violations, no direct storefront publication; admi",
+      "recallCount": 5,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1.6527949839830398,
+      "maxScore": 0.39614946246147154,
+      "firstRecalledAt": "2026-04-18T02:28:41.873Z",
+      "lastRecalledAt": "2026-04-18T18:11:33.642Z",
+      "queryHashes": [
+        "70d1a99f8702",
+        "db66008947ed",
+        "a913e27d1840",
+        "f292c23f69c3",
+        "9cc6ae036916"
+      ],
+      "recallDays": [
+        "2026-04-18"
+      ],
+      "conceptTags": [
+        "docs/sourcing-model.md",
+        "human-reviewed",
+        "truth/inference",
+        "last-updated",
+        "agent/admin",
+        "atelier-catalog",
+        "defined",
+        "palletelle"
+      ]
+    },
+    "memory:memory/2026-04-18.md:16:19": {
+      "key": "memory:memory/2026-04-18.md:16:19",
+      "path": "memory/2026-04-18.md",
+      "startLine": 16,
+      "endLine": 19,
+      "source": "memory",
+      "snippet": "- Began implementation-ready sourcing code structures in packages/domain and apps/admin: created sourcing domain types (including ProductSource, ProductProvenance, FreshnessState with status/checkedAt/thresholdHours/reason, StagingStatus enum, ReviewDecision enum), pure guard functions, validation helpers, and fixture-backed admin app scaffold for staging queue and review detail with placeholder review actions. - Implemented stronger source-vs-normalized-vs-inferred separation in the domain model and admin review UI, so raw source facts, normalized facts, and inferred fields are structurally distinct and visually obvious at review time. - Hit a workspace/package alignment issue in apps/admin",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.549656730890274,
+      "maxScore": 0.3112586677074432,
+      "firstRecalledAt": "2026-04-18T02:28:41.873Z",
+      "lastRecalledAt": "2026-04-18T12:16:16.667Z",
+      "queryHashes": [
+        "70d1a99f8702",
+        "a913e27d1840"
+      ],
+      "recallDays": [
+        "2026-04-18"
+      ],
+      "conceptTags": [
+        "implementation-ready",
+        "packages/domain",
+        "apps/admin",
+        "fixture-backed",
+        "source-vs-normalized-vs-inferred",
+        "workspace/package",
+        "began",
+        "implementation"
+      ]
+    },
+    "memory:memory/2026-04-18.md:31:36": {
+      "key": "memory:memory/2026-04-18.md:31:36",
+      "path": "memory/2026-04-18.md",
+      "startLine": 31,
+      "endLine": 36,
+      "source": "memory",
+      "snippet": "- Next durable UI goal is admin usability for manual Amazon seed review: filters by ingestMethod, staging status, and public state, quick search by ASIN/product id, badges for `manual_seed` / `needs_review` / low confidence, and clearer separation of source vs normalized vs inferred data. - User wants the webserver refreshed after the lingering `235.js` error is cleared. - Diagnosed current customer-side product issue: storefront browse is DB-backed through `apps/storefront/lib/db-products.ts`, but `apps/storefront/app/products/[slug]/page.tsx` is still fixture-backed against `sampleProducts`, so seeded DB products do not render proper product detail content yet. - User wants sample/test see",
+      "recallCount": 3,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 1.0507638901472092,
+      "maxScore": 0.45115520656108854,
+      "firstRecalledAt": "2026-04-18T17:27:25.138Z",
+      "lastRecalledAt": "2026-04-18T18:11:33.642Z",
+      "queryHashes": [
+        "f292c23f69c3",
+        "4e300d3750d3",
+        "9cc6ae036916"
+      ],
+      "recallDays": [
+        "2026-04-18"
+      ],
+      "conceptTags": [
+        "asin/product",
+        "manual-seed",
+        "needs-review",
+        "235.js",
+        "customer-side",
+        "db-backed",
+        "apps/storefront/app/products",
+        "page.tsx"
+      ]
+    },
+    "memory:memory/2026-04-18.md:26:32": {
+      "key": "memory:memory/2026-04-18.md:26:32",
+      "path": "memory/2026-04-18.md",
+      "startLine": 26,
+      "endLine": 32,
+      "source": "memory",
+      "snippet": "- First real DB foundation implemented with Prisma + SQLite, local/dev-safe. Core schema includes strict separation for `Product`, `ProductSourceData`, `ProductNormalizedData`, `ProductInferredData`, `ProductReviewState`, `ProductVisibility`, `ProductSourceHealth`, `ExternalProductSignals`, `CustomerReview`, `ReviewSummary`, `Ensemble`, `EnsembleItem`, `AffiliateConfig`, and future customer foundation records. - DB foundation also includes Prisma seed from current local data, admin DB-backed services, one storefront DB-aware browse read path, and documentation in `docs/product-db.md`. - Important trust rule carried through implementation: public displayability is derived, not controlled by o",
+      "recallCount": 3,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.918066844344139,
+      "maxScore": 0.3896859675645828,
+      "firstRecalledAt": "2026-04-18T17:27:25.138Z",
+      "lastRecalledAt": "2026-04-18T18:11:33.642Z",
+      "queryHashes": [
+        "f292c23f69c3",
+        "4e300d3750d3",
+        "9cc6ae036916"
+      ],
+      "recallDays": [
+        "2026-04-18"
+      ],
+      "conceptTags": [
+        "local/dev-safe",
+        "db-backed",
+        "db-aware",
+        "docs/product-db.md",
+        "first",
+        "real",
+        "foundation",
+        "implemented"
+      ]
+    },
+    "memory:memory/2026-04-18.md:22:27": {
+      "key": "memory:memory/2026-04-18.md:22:27",
+      "path": "memory/2026-04-18.md",
+      "startLine": 22,
+      "endLine": 27,
+      "source": "memory",
+      "snippet": "- Admin auth foundation implemented in `apps/admin` using Auth.js credentials, bcrypt-hashed seeded admin password, middleware protection, and `requireAdmin()` server guard. Current seeded local login is `admin@example.com` with a temporary password provided by user and stored only as bcrypt hash in `apps/admin/.env.local`. - LAN/dev access note: user accesses admin over `192.168.1.115:3001`; auth redirect behavior needed LAN-aware handling rather than forcing localhost. - Admin app now has protected pages for review queue, review detail, affiliate config, product editor, and ensemble builder, all fixture-backed or DB-backed through service layers. - Admin usability/scalability refactor comp",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.36298596560955043,
+      "maxScore": 0.36298596560955043,
+      "firstRecalledAt": "2026-04-18T17:27:25.138Z",
+      "lastRecalledAt": "2026-04-18T17:27:25.138Z",
+      "queryHashes": [
+        "f292c23f69c3"
+      ],
+      "recallDays": [
+        "2026-04-18"
+      ],
+      "conceptTags": [
+        "apps/admin",
+        "auth.js",
+        "bcrypt-hashed",
+        "example.com",
+        "env.local",
+        "lan/dev",
+        "192.168.1.115",
+        "lan-aware"
+      ]
+    },
+    "memory:memory/2026-04-18.md:16:22": {
+      "key": "memory:memory/2026-04-18.md:16:22",
+      "path": "memory/2026-04-18.md",
+      "startLine": 16,
+      "endLine": 22,
+      "source": "memory",
+      "snippet": "- Began implementation-ready sourcing code structures in packages/domain and apps/admin: created sourcing domain types (including ProductSource, ProductProvenance, FreshnessState with status/checkedAt/thresholdHours/reason, StagingStatus enum, ReviewDecision enum), pure guard functions, validation helpers, and fixture-backed admin app scaffold for staging queue and review detail with placeholder review actions. - Implemented stronger source-vs-normalized-vs-inferred separation in the domain model and admin review UI, so raw source facts, normalized facts, and inferred fields are structurally distinct and visually obvious at review time. - Hit a workspace/package alignment issue in apps/admin",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.6609193325042724,
+      "maxScore": 0.33764799833297726,
+      "firstRecalledAt": "2026-04-18T17:27:25.138Z",
+      "lastRecalledAt": "2026-04-18T18:11:33.642Z",
+      "queryHashes": [
+        "f292c23f69c3",
+        "9cc6ae036916"
+      ],
+      "recallDays": [
+        "2026-04-18"
+      ],
+      "conceptTags": [
+        "implementation-ready",
+        "packages/domain",
+        "apps/admin",
+        "fixture-backed",
+        "source-vs-normalized-vs-inferred",
+        "workspace/package",
+        "began",
+        "implementation"
+      ]
+    },
+    "memory:memory/2026-04-18.md:1:2": {
+      "key": "memory:memory/2026-04-18.md:1:2",
+      "path": "memory/2026-04-18.md",
+      "startLine": 1,
+      "endLine": 2,
+      "source": "memory",
+      "snippet": "- User clarified operational identity: Hank is the main OpenClaw, while Milo is the main system coordination agent inside the Atelier/Palletelle workspace. Milo should manage and keep track of sub-agents rather than treating named agents like Ada as unknown entities.",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.42090103030204773,
+      "maxScore": 0.42090103030204773,
+      "firstRecalledAt": "2026-04-19T04:13:53.786Z",
+      "lastRecalledAt": "2026-04-19T04:13:53.786Z",
+      "queryHashes": [
+        "3672f1168581"
+      ],
+      "recallDays": [
+        "2026-04-19"
+      ],
+      "conceptTags": [
+        "atelier/palletelle",
+        "sub-agents",
+        "user",
+        "clarified",
+        "operational",
+        "identity",
+        "hank",
+        "the"
+      ]
+    }
+  }
+}

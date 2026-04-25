@@ -1,0 +1,14 @@
+export const manualAmazonAsins = [
+  'B0FC6F6DDW',
+  'B0DG4P79JL',
+  'B0FN7TW7QV',
+  'B0FP5B6C3M',
+  'B0GK973M2X',
+  'B0GWH17S2B',
+  'B0GCMFSP7D',
+  'B0DQWR33KH',
+  'B0CYZLX7SM',
+  'B0CXDRHCM3',
+  'B0F7QY55N8',
+  'B09Q2TSZZ7',
+] as const;

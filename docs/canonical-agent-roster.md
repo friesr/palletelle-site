@@ -22,7 +22,7 @@
   - sourcing/normalization to Ada
   - truth/quality concerns to Ruth
   - validation/enrichment/content intelligence to Ezra
-  - color season/product grouping work to the Ensemble Design Agent
+  - color season/product grouping work to Iris
   - frontend to Leah
   - backend/ops to Titus
   - database to Isaac
@@ -187,7 +187,7 @@
   - no manipulative marketing patterns
   - no deceptive claims or exaggerated persuasion
 
-### Ensemble Design Agent
+### Iris
 - **Job title:** Color Season and Wardrobe Grouping Lead
 - **Mission:** Build coherent wardrobes and ensembles based on sound color season expertise.
 - **Core duties:**
@@ -203,7 +203,7 @@
 ## Rebuild Decisions
 
 - `main` now serves as the standing CEO/orchestration layer instead of a separate persistent Micah role.
-- Ensemble Design Agent should be included as a launch-critical agent in the first rebuild wave.
+- Iris should be included as a launch-critical agent in the first rebuild wave.
 - Mark is deferred for now.
 - CFO, CIO, and CTO should begin as advisory roles rather than always-on persistent agents.
 
@@ -229,10 +229,10 @@
   - Ada
   - Ruth
   - Ezra
-  - Ensemble Design Agent
+  - Iris
   - Leah
   - Titus
   - Isaac
 - Mark is non-critical and may be deferred.
-- Ensemble Design Agent is launch-critical and should be planned intentionally.
+- Iris is launch-critical and should be planned intentionally.
 - CFO, CIO, and CTO may be implemented as executive/advisory roles rather than always-on workers, unless later promoted to persistent agents.

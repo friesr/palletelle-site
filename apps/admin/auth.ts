@@ -1,8 +1,7 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import { compare } from 'bcryptjs';
 import authConfig from '@/auth.config';
-import { getSeededAdminUser, getSeededAdminValidation } from '@/lib/auth/seeded-admin';
+import { authorizeAdminBootstrapSignIn, getAdminIdentityValidation } from '@/lib/auth/admin-access';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -10,40 +9,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Credentials({
       name: 'Admin login',
       credentials: {
-        login: { label: 'Email or username', type: 'text' },
-        password: { label: 'Password', type: 'password' },
+        email: { label: 'Admin email', type: 'email' },
+        password: { label: 'Bootstrap password', type: 'password' },
       },
       async authorize(credentials) {
-        const validation = getSeededAdminValidation();
+        const validation = getAdminIdentityValidation();
         if (!validation.valid) {
-          console.error('Admin auth configuration invalid:', validation.reasons.join(', '));
+          console.error('Admin auth configuration invalid:', validation.reasons.join(' '));
           return null;
         }
 
-        const login = credentials?.login?.toString().trim();
+        const email = credentials?.email?.toString().trim();
         const password = credentials?.password?.toString();
-        const admin = getSeededAdminUser();
 
-        if (!login || !password || !admin) {
+        if (!email || !password) {
           return null;
         }
 
-        const matchesLogin = login.toLowerCase() === admin.login.toLowerCase();
-        if (!matchesLogin) {
-          return null;
-        }
-
-        const passwordMatches = await compare(password, admin.passwordHash);
-        if (!passwordMatches) {
-          return null;
-        }
-
-        return {
-          id: admin.id,
-          name: admin.name,
-          email: admin.email,
-          role: admin.role,
-        };
+        return authorizeAdminBootstrapSignIn(email, password);
       },
     }),
   ],

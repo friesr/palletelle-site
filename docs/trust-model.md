@@ -8,6 +8,7 @@ Document how Atelier explains confidence, provenance, and recommendation rationa
 
 - The storefront is currently fixture-backed.
 - Recommendation logic is simple and explainable.
+- Product listings are planned to come from Amazon affiliate sourcing, with Palletelle adding clearly labeled inferred style guidance.
 - The product must avoid deceptive certainty and hidden scoring logic.
 
 ## 3. What is inferred
@@ -76,3 +77,4 @@ The current shell does not:
 - claim live catalog truth
 - claim validated fit or color certainty beyond the explicit fixture evidence
 - imply that ensemble suggestions are model-driven or stylist-personalized
+- treat affiliate-sourced pricing or availability as trustworthy unless refreshed and clearly sourced

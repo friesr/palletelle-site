@@ -1,0 +1,432 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductWorkflowState {
+  discovered
+  normalized
+  needs_review
+  hold
+  approved
+  rejected
+  stale
+  needs_refresh
+}
+
+enum ProductIngestState {
+  manual_seeded
+  source_captured
+  normalized
+  refresh_required
+}
+
+enum ProductReviewStatus {
+  pending
+  approved
+  hold
+  rejected
+}
+
+enum ProductPreviewStatus {
+  none
+  admin_only
+  dev_customer
+}
+
+enum ProductPublishStatus {
+  unpublished
+  published
+  withdrawn
+}
+
+enum SourceStatus {
+  unknown
+  active
+  inactive
+  unavailable
+  changed
+}
+
+enum ExternalReputationState {
+  unknown
+  healthy
+  caution
+  at_risk
+}
+
+enum ExternalRecommendation {
+  none
+  hold
+  deactivate
+  needs_review
+}
+
+enum ModerationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum CustomerRole {
+  customer
+  admin
+}
+
+enum AuthMethodType {
+  password
+  passkey
+  totp
+}
+
+model Product {
+  id                String                @id
+  slug              String                @unique
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  sourceData        ProductSourceData[]
+  priceSnapshots    ProductPriceSnapshot[]
+  normalizedData    ProductNormalizedData?
+  inferredData      ProductInferredData?
+  lifecycleState    ProductLifecycleState?
+  lifecycleAudits   ProductLifecycleAudit[]
+  reviewState       ProductReviewState?
+  visibility        ProductVisibility?
+  sourceHealth      ProductSourceHealth?
+  externalSignals   ExternalProductSignals?
+  reviewSummaries   ReviewSummary[]
+  customerReviews   CustomerReview[]
+  ensembleItems     EnsembleItem[]
+  savedByUsers      SavedProduct[]
+}
+
+model ProductLifecycleState {
+  id             String               @id
+  productId      String               @unique
+  ingestState    ProductIngestState
+  reviewState    ProductReviewStatus
+  previewState   ProductPreviewStatus
+  publishState   ProductPublishStatus
+  stateNotes     String?
+  lastChangedAt  DateTime?
+  lastChangedBy  String?
+  product        Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductLifecycleAudit {
+  id                String               @id
+  productId         String
+  action            String
+  changedAt         DateTime
+  changedBy         String
+  fromIngestState   ProductIngestState
+  toIngestState     ProductIngestState
+  fromReviewState   ProductReviewStatus
+  toReviewState     ProductReviewStatus
+  fromPreviewState  ProductPreviewStatus
+  toPreviewState    ProductPreviewStatus
+  fromPublishState  ProductPublishStatus
+  toPublishState    ProductPublishStatus
+  reason            String?
+  product           Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, changedAt])
+}
+
+model ProductPriceSnapshot {
+  id               String   @id
+  productId        String
+  productSourceDataId String
+  capturedAt       DateTime @default(now())
+  priceText        String
+  priceAmountCents Int?
+  currencyCode     String?
+  captureMethod    String
+  notes            String?
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sourceData       ProductSourceData @relation(fields: [productSourceDataId], references: [id], onDelete: Cascade)
+
+  @@index([productId, capturedAt])
+  @@index([productSourceDataId, capturedAt])
+}
+
+model ProductSourceData {
+  id                String   @id
+  productId         String
+  sourcePlatform    String
+  ingestMethod      String?
+  sourceIdentifier  String
+  canonicalUrl      String?
+  affiliateUrl      String?
+  retrievedAt       DateTime
+  title             String?
+  categoryText      String?
+  colorText         String?
+  priceText         String?
+  availabilityText  String?
+  rawSnapshotJson   String?
+  sourceFieldMapJson String?
+  priceSnapshots    ProductPriceSnapshot[]
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model ProductNormalizedData {
+  id                 String   @id
+  productId          String   @unique
+  title              String
+  brand              String?
+  category           String?
+  sourceColor        String?
+  material           String?
+  priceText          String?
+  availabilityText   String?
+  summary            String?
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductInferredData {
+  id                    String   @id
+  productId             String   @unique
+  paletteFamily         String?
+  colorHarmony          String?
+  styleDirection        String?
+  styleOpinion          String?
+  dataConfidence        String
+  confidenceReason      String
+  confidenceImprovement String
+  missingAttributesJson String
+  uncertainAttributesJson String
+  product               Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductReviewState {
+  id               String               @id
+  productId        String               @unique
+  workflowState    ProductWorkflowState
+  reviewedAt       DateTime?
+  reviewedBy       String?
+  reviewerNotes    String?
+  product          Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductVisibility {
+  id                     String   @id
+  productId              String   @unique
+  isPublic               Boolean  @default(false)
+  intendedActive         Boolean  @default(false)
+  visibilityNotes        String?
+  lastDisplayabilityCheckAt DateTime?
+  product                Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductSourceHealth {
+  id                  String       @id
+  productId           String       @unique
+  sourceStatus        SourceStatus @default(unknown)
+  lastSourceCheckAt   DateTime?
+  sourceCheckResult   String?
+  needsRevalidation   Boolean      @default(false)
+  revalidationReason  String?
+  product             Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ExternalProductSignals {
+  id                           String                  @id
+  productId                    String                  @unique
+  reputationState              ExternalReputationState @default(unknown)
+  lastExternalCheckAt          DateTime?
+  repeatedComplaintPattern     Boolean                 @default(false)
+  lowRatingRisk                Boolean                 @default(false)
+  recommendation               ExternalRecommendation  @default(none)
+  notes                        String?
+  product                      Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model CustomerReview {
+  id                String            @id
+  productId         String
+  userId            String?
+  rating            Int?
+  title             String?
+  body              String?
+  moderationStatus  ModerationStatus  @default(pending)
+  submittedAt       DateTime          @default(now())
+  moderatedAt       DateTime?
+  product           Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user              User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+}
+
+model ReviewSummary {
+  id                   String   @id
+  productId            String
+  complaintTrend       String?
+  moderationNote       String?
+  generatedAt          DateTime @default(now())
+  product              Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model Ensemble {
+  id                   String         @id
+  slug                 String         @unique
+  name                 String
+  summary              String
+  confidence           String
+  objectiveMatch       String
+  inferredMatch        String
+  subjectiveSuggestion String
+  paletteFamiliesJson  String
+  colorProfileTagsJson String
+  preferenceTagsJson   String
+  source               String
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  items                EnsembleItem[]
+  savedByUsers         SavedEnsemble[]
+}
+
+model EnsembleItem {
+  id          String   @id
+  ensembleId  String
+  productId   String
+  role        String
+  orderIndex  Int
+  notes       String?
+  ensemble    Ensemble @relation(fields: [ensembleId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([ensembleId])
+  @@index([productId])
+}
+
+model AffiliateConfig {
+  id                         String   @id
+  platform                   String
+  storeName                  String
+  associateStoreId           String?
+  apiStatus                  String
+  enabled                    Boolean  @default(false)
+  freshnessPriceHours        Int
+  freshnessAvailabilityHours Int
+  connectionNotes            String?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+}
+
+model User {
+  id                  String            @id
+  email               String            @unique
+  role                CustomerRole      @default(customer)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  lastSignedInAt      DateTime?
+  profile             UserProfile?
+  colorProfile        ColorProfile?
+  preferenceProfile   PreferenceProfile?
+  authMethods         AuthMethod[]
+  savedProducts       SavedProduct[]
+  savedEnsembles      SavedEnsemble[]
+  customerReviews     CustomerReview[]
+  mfaEnrollments      MFAEnrollment[]
+}
+
+model UserProfile {
+  id                 String   @id
+  userId             String   @unique
+  displayName        String?
+  pronouns           String?
+  timezone           String?
+  locale             String?
+  onboardingState    String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ColorProfile {
+  id                 String   @id
+  userId             String   @unique
+  paletteFamily      String?
+  undertone          String?
+  contrastLevel      String?
+  source             String
+  confidence         String
+  notes              String?
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PreferenceProfile {
+  id                       String   @id
+  userId                   String   @unique
+  preferredCategoriesJson  String
+  avoidedColorsJson        String
+  likedPaletteFamiliesJson String
+  dislikedPaletteFamiliesJson String
+  fitNotesJson             String
+  savedForLaterEnabled     Boolean  @default(true)
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SavedProduct {
+  id         String   @id
+  userId     String
+  productId  String
+  savedAt    DateTime @default(now())
+  note       String?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([productId])
+}
+
+model SavedEnsemble {
+  id          String    @id
+  userId      String
+  ensembleId  String
+  savedAt     DateTime  @default(now())
+  note        String?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ensemble    Ensemble  @relation(fields: [ensembleId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([ensembleId])
+}
+
+model AuthMethod {
+  id                  String          @id
+  userId              String
+  type                AuthMethodType
+  isPrimary           Boolean         @default(false)
+  passwordHash        String?
+  passwordUpdatedAt   DateTime?
+  passkeyLabel        String?
+  credentialId        String?
+  publicKey           String?
+  counter             Int?
+  transportsJson      String?
+  backedUp            Boolean?
+  createdAt           DateTime        @default(now())
+  lastUsedAt          DateTime?
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model MFAEnrollment {
+  id          String   @id
+  userId      String
+  method      String
+  enrolledAt  DateTime @default(now())
+  verifiedAt  DateTime?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
